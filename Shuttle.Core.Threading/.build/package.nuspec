@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<package>
+  <metadata>
+    <id>Shuttle.Core.Threading</id>
+    <version>{semver}</version>
+    <authors>Eben Roux</authors>
+    <owners>Eben Roux</owners>
+    <licenseUrl>https://github.com/shuttle/Shuttle.Core.Threading/raw/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/shuttle/Shuttle.Core.Threading</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/Shuttle/Shuttle.Core.Threading/master/.media/logo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Thread-based processing.</description>
+    <releaseNotes />
+    <copyright>Copyright (c) {year}, Eben Roux</copyright>
+    <tags>shuttle threading processor</tags>
+    <dependencies>
+      <dependency id="Shuttle.Core.Contract" version="{Shuttle.Core.Contract-version}" />
+      <dependency id="Shuttle.Core.Configuration" version="{Shuttle.Core.Configuration-version}" />
+      <dependency id="Shuttle.Core.Logging" version="{Shuttle.Core.Logging-version}" />
+    </dependencies>
+  </metadata>
+</package>
