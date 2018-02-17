@@ -1,5 +1,15 @@
 # Shuttle.Core.Threading
 
-Provides various classes to facilitate thread-based processing.
+```
+PM> Install-Package Shuttle.Core.Autofac
+```
 
-Visit the [documentation site](http://shuttle.github.io/shuttle-core/).
+Provides various classes and interfaces to facilitate thread-based processing.
+
+## ProcessorThreadPool
+
+``` c#
+public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory)
+```
+
+Each thread pool has a `name` used only for identyfing the pool and for logging.  The `threadCount` is specified and will run a `Thread` that calls the `IProcessor.Execute(IThreadState state)` instance provided by the `IProcessorFactory.Create()` method in a loop while the `IThreadState.Active` returns true.
