@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Shuttle.Core.Configuration;
 using Shuttle.Core.Logging;
@@ -36,7 +37,19 @@ namespace Shuttle.Core.Threading
 
             _thread = new Thread(Work) {Name = _name};
 
-            _thread.SetApartmentState(ApartmentState.MTA);
+            try
+            {
+                _thread.SetApartmentState(ApartmentState.MTA);
+            }
+            catch (Exception ex)
+            {
+#if !NETCOREAPP2_0
+                _log.Warning(ex.Message);
+#else
+                _log.Information(ex.Message);
+#endif
+            }
+
             _thread.IsBackground = true;
             _thread.Priority = ThreadPriority.Normal;
 
