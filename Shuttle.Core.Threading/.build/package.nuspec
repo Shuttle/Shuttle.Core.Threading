@@ -9,6 +9,7 @@
     <licenseUrl>https://github.com/shuttle/Shuttle.Core.Threading/raw/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/shuttle/Shuttle.Core.Threading</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/Shuttle/Shuttle.Core.Threading/master/.media/logo.png</iconUrl>
+    <repository type="git" url="https://github.com/Shuttle/Shuttle.Core.Threading.git" />
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Thread-based processing.</description>
     <releaseNotes />

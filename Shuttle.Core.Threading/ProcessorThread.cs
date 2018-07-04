@@ -43,7 +43,7 @@ namespace Shuttle.Core.Threading
             }
             catch (Exception ex)
             {
-#if !NETCOREAPP2_0
+#if !NETCOREAPP2_0 && !NETCOREAPP2_1
                 _log.Warning(ex.Message);
 #else
                 _log.Information(ex.Message);
