@@ -7,13 +7,11 @@ namespace Shuttle.Core.Threading
     public class ThreadState : IThreadState
     {
         private readonly Func<bool> _state;
-        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly CancellationToken _cancellationToken;
 
-        public ThreadState(CancellationTokenSource cancellationTokenSource)
+        public ThreadState(CancellationToken cancellationToken)
         {
-            Guard.AgainstNull(cancellationTokenSource, nameof(cancellationTokenSource));
-
-            _cancellationTokenSource = cancellationTokenSource;
+            _cancellationToken = cancellationToken;
         }
 
         public ThreadState(Func<bool> state)
@@ -23,6 +21,6 @@ namespace Shuttle.Core.Threading
             _state = state;
         }
 
-        public bool Active => _cancellationTokenSource?.IsCancellationRequested ?? _state.Invoke();
+        public bool Active => _state?.Invoke() ?? _cancellationToken.IsCancellationRequested;
     }
 }
