@@ -19,6 +19,7 @@
       <dependency id="Shuttle.Core.Contract" version="{Shuttle.Core.Contract-version}" />
       <dependency id="Shuttle.Core.Configuration" version="{Shuttle.Core.Configuration-version}" />
       <dependency id="Shuttle.Core.Logging" version="{Shuttle.Core.Logging-version}" />
+      <dependency id="Shuttle.Core.Reflection" version="{Shuttle.Core.Reflection-version}" />
     </dependencies>
   </metadata>
 </package>
