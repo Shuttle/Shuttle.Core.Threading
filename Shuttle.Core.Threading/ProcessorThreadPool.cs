@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Shuttle.Core.Contract;
 using Shuttle.Core.Logging;
+using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
@@ -16,7 +18,14 @@ namespace Shuttle.Core.Threading
 
         public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory)
         {
-            _name = name;
+            Guard.AgainstNull(processorFactory, nameof(processorFactory));
+
+            if (_threadCount < 1)
+            {
+                throw new ThreadCountZeroException();
+            }
+
+            _name = name ?? Guid.NewGuid().ToString();
             _threadCount = threadCount;
             _processorFactory = processorFactory;
 
@@ -48,11 +57,6 @@ namespace Shuttle.Core.Threading
             if (_started)
             {
                 return this;
-            }
-
-            if (_threadCount < 1)
-            {
-                throw new ThreadCountZeroException();
             }
 
             StartThreads();
@@ -103,6 +107,8 @@ namespace Shuttle.Core.Threading
                 {
                     thread.Stop();
                 }
+
+                _processorFactory.AttemptDispose();
             }
 
             _disposed = true;

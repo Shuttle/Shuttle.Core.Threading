@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Shuttle.Core.Configuration;
 using Shuttle.Core.Logging;
+using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
@@ -43,7 +44,7 @@ namespace Shuttle.Core.Threading
             }
             catch (Exception ex)
             {
-#if !NETCOREAPP2_0 && !NETCOREAPP2_1
+#if !NETCOREAPP2_1
                 _log.Warning(ex.Message);
 #else
                 _log.Information(ex.Message);
@@ -83,6 +84,8 @@ namespace Shuttle.Core.Threading
             }
 
             _active = false;
+
+            _processor.AttemptDispose();
 
             if (_thread.IsAlive)
             {
