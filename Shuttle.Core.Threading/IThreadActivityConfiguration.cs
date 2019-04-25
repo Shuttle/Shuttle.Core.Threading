@@ -4,6 +4,6 @@ namespace Shuttle.Core.Threading
 {
     public interface IThreadActivityConfiguration
     {
-        TimeSpan[] DurationToSleepWhenIdle { get; set; }
+        TimeSpan[] DurationToSleepWhenIdle { get; }
     }
 }
