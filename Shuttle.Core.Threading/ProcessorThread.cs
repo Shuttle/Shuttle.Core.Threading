@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Shuttle.Core.Configuration;
+using Shuttle.Core.Contract;
 using Shuttle.Core.Logging;
 using Shuttle.Core.Reflection;
 
@@ -21,6 +22,8 @@ namespace Shuttle.Core.Threading
 
         public ProcessorThread(string name, IProcessor processor)
         {
+            Guard.AgainstNull(processor, nameof(processor));
+
             _name = name;
             _processor = processor;
 

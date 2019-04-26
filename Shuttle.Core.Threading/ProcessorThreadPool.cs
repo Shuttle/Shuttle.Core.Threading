@@ -20,7 +20,7 @@ namespace Shuttle.Core.Threading
         {
             Guard.AgainstNull(processorFactory, nameof(processorFactory));
 
-            if (_threadCount < 1)
+            if (threadCount < 1)
             {
                 throw new ThreadCountZeroException();
             }
