@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
 {
@@ -7,15 +8,17 @@ namespace Shuttle.Core.Threading
     {
         public const int MaxStepSize = 1000;
 
-        public static void While(int ms, IThreadState state)
+        public static void While(int ms, CancellationToken cancellationToken)
         {
             // step size should be as large as possible,
             // max step size by default
-            While(ms, state, MaxStepSize);
+            While(ms, cancellationToken, MaxStepSize);
         }
 
-        public static void While(int ms, IThreadState state, int step)
+        public static void While(int ms, CancellationToken cancellationToken, int step)
         {
+            Guard.AgainstNull(cancellationToken, nameof(cancellationToken));
+
             if (ms < 0)
             {
                 return;
@@ -34,7 +37,7 @@ namespace Shuttle.Core.Threading
 
             var remaining = (int) (end - DateTime.UtcNow).TotalMilliseconds;
 
-            while (state.Active && remaining > 0)
+            while (!cancellationToken.IsCancellationRequested && remaining > 0)
             {
                 var sleep = remaining < step ? remaining : step;
                 Thread.Sleep(sleep);

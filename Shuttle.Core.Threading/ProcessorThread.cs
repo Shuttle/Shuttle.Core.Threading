@@ -7,7 +7,7 @@ using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
-    public class ProcessorThread : IThreadState
+    public class ProcessorThread
     {
         private static readonly int ThreadJoinTimeoutInterval =
             ConfigurationItem<int>.ReadSetting("ThreadJoinTimeoutInterval", 1000).GetValue();
@@ -15,8 +15,9 @@ namespace Shuttle.Core.Threading
         private readonly ILog _log;
         private readonly string _name;
         private readonly IProcessor _processor;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private volatile bool _active;
+        private bool _started;
 
         private Thread _thread;
 
@@ -27,14 +28,16 @@ namespace Shuttle.Core.Threading
             _name = name;
             _processor = processor;
 
+            CancellationToken = _cancellationTokenSource.Token;
+
             _log = Log.For(this);
         }
 
-        public bool Active => _active;
+        public CancellationToken CancellationToken {get; }
 
         public void Start()
         {
-            if (_active)
+            if (_started)
             {
                 return;
             }
@@ -57,8 +60,6 @@ namespace Shuttle.Core.Threading
             _thread.IsBackground = true;
             _thread.Priority = ThreadPriority.Normal;
 
-            _active = true;
-
             _thread.Start();
 
             if (Log.IsTraceEnabled)
@@ -67,15 +68,17 @@ namespace Shuttle.Core.Threading
                     _processor.GetType().FullName));
             }
 
-            while (!_thread.IsAlive && _active)
+            while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
             {
             }
 
-            if (_active && Log.IsTraceEnabled)
+            if (!CancellationToken.IsCancellationRequested && Log.IsTraceEnabled)
             {
                 _log.Trace(string.Format(Resources.ProcessorThreadActive, _thread.ManagedThreadId,
                     _processor.GetType().FullName));
             }
+
+            _started = true;
         }
 
         public void Stop()
@@ -86,7 +89,7 @@ namespace Shuttle.Core.Threading
                     _processor.GetType().FullName));
             }
 
-            _active = false;
+            _cancellationTokenSource.Cancel();
 
             _processor.AttemptDispose();
 
@@ -98,7 +101,7 @@ namespace Shuttle.Core.Threading
 
         private void Work()
         {
-            while (_active)
+            while (!CancellationToken.IsCancellationRequested)
             {
                 if (Log.IsVerboseEnabled)
                 {
@@ -106,7 +109,7 @@ namespace Shuttle.Core.Threading
                         _processor.GetType().FullName));
                 }
 
-                _processor.Execute(this);
+                _processor.Execute(CancellationToken);
             }
 
             if (Log.IsTraceEnabled)
@@ -118,7 +121,7 @@ namespace Shuttle.Core.Threading
 
         internal void Deactivate()
         {
-            _active = false;
+            _cancellationTokenSource.Cancel();
         }
     }
 }

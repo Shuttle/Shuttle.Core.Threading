@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
@@ -26,11 +27,11 @@ namespace Shuttle.Core.Threading
             _durationIndex = 0;
         }
 
-        public void Waiting(IThreadState state)
+        public void Waiting(CancellationToken cancellationToken)
         {
             var ms = (int) GetSleepTimeSpan().TotalMilliseconds;
 
-            ThreadSleep.While(ms, state);
+            ThreadSleep.While(ms, cancellationToken);
         }
 
         public void Working()

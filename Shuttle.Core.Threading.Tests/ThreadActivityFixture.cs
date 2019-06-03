@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Moq;
 using NUnit.Framework;
 
@@ -17,16 +18,13 @@ namespace Shuttle.Core.Threading.Tests
             });
 
             var start = DateTime.Now;
+            var token = new CancellationToken(false);
 
-            var mockState = new Mock<IThreadState>();
-
-            mockState.Setup(mock => mock.Active).Returns(true);
-
-            activity.Waiting(mockState.Object);
+            activity.Waiting(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 250);
 
-            activity.Waiting(mockState.Object);
+            activity.Waiting(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 750);
         }
