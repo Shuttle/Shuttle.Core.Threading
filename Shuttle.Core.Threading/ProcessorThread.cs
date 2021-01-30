@@ -15,7 +15,7 @@ namespace Shuttle.Core.Threading
         private readonly ILog _log;
         private readonly string _name;
         private readonly IProcessor _processor;
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly System.Threading.CancellationTokenSource _cancellationTokenSource = new System.Threading.CancellationTokenSource();
 
         private bool _started;
 
