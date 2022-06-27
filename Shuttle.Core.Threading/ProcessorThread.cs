@@ -1,24 +1,19 @@
 using System;
 using System.Threading;
-using Shuttle.Core.Configuration;
 using Shuttle.Core.Contract;
-using Shuttle.Core.Logging;
 using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
     public class ProcessorThread
     {
-        private static readonly int ThreadJoinTimeoutInterval =
-            ConfigurationItem<int>.ReadSetting("ThreadJoinTimeoutInterval", 1000).GetValue();
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private readonly ILog _log;
         private readonly string _name;
         private readonly IProcessor _processor;
-        private readonly System.Threading.CancellationTokenSource _cancellationTokenSource = new System.Threading.CancellationTokenSource();
+        private ProcessorThreadEventArgs _eventArgs;
 
         private bool _started;
-
         private Thread _thread;
 
         public ProcessorThread(string name, IProcessor processor)
@@ -29,11 +24,29 @@ namespace Shuttle.Core.Threading
             _processor = processor;
 
             CancellationToken = _cancellationTokenSource.Token;
-
-            _log = Log.For(this);
         }
 
-        public CancellationToken CancellationToken {get; }
+        public CancellationToken CancellationToken { get; }
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopped = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting = delegate
+        {
+        };
 
         public void Start()
         {
@@ -42,52 +55,39 @@ namespace Shuttle.Core.Threading
                 return;
             }
 
-            _thread = new Thread(Work) {Name = _name};
+            _thread = new Thread(Work) { Name = _name };
 
-            try
-            {
-                _thread.SetApartmentState(ApartmentState.MTA);
-            }
-            catch (Exception ex)
-            {
-#if !NETCOREAPP2_1
-                _log.Warning(ex.Message);
-#else
-                _log.Information(ex.Message);
-#endif
-            }
+            _thread.TrySetApartmentState(ApartmentState.MTA);
 
             _thread.IsBackground = true;
             _thread.Priority = ThreadPriority.Normal;
 
             _thread.Start();
 
-            if (Log.IsTraceEnabled)
-            {
-                _log.Trace(string.Format(Resources.ProcessorThreadStarting, _thread.ManagedThreadId,
-                    _processor.GetType().FullName));
-            }
+            _eventArgs = new ProcessorThreadEventArgs(_name, _thread.ManagedThreadId, _processor.GetType().FullName);
+
+            ProcessorThreadStarting.Invoke(this, _eventArgs);
 
             while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
             {
             }
 
-            if (!CancellationToken.IsCancellationRequested && Log.IsTraceEnabled)
+            if (!CancellationToken.IsCancellationRequested)
             {
-                _log.Trace(string.Format(Resources.ProcessorThreadActive, _thread.ManagedThreadId,
-                    _processor.GetType().FullName));
+                ProcessorThreadActive.Invoke(this, _eventArgs);
             }
 
             _started = true;
         }
 
-        public void Stop()
+        public void Stop(TimeSpan timeout)
         {
-            if (Log.IsTraceEnabled)
+            if (!_started)
             {
-                _log.Trace(string.Format(Resources.ProcessorThreadStopping, _thread.ManagedThreadId,
-                    _processor.GetType().FullName));
+                throw new InvalidOperationException(Resources.ProcessorThreadNotStartedException);
             }
+
+            ProcessorThreadStopping.Invoke(this, _eventArgs);
 
             _cancellationTokenSource.Cancel();
 
@@ -95,7 +95,7 @@ namespace Shuttle.Core.Threading
 
             if (_thread.IsAlive)
             {
-                _thread.Join(ThreadJoinTimeoutInterval);
+                _thread.Join(timeout);
             }
         }
 
@@ -103,20 +103,12 @@ namespace Shuttle.Core.Threading
         {
             while (!CancellationToken.IsCancellationRequested)
             {
-                if (Log.IsVerboseEnabled)
-                {
-                    _log.Verbose(string.Format(Resources.ProcessorExecuting, _thread.ManagedThreadId,
-                        _processor.GetType().FullName));
-                }
+                ProcessorExecuting.Invoke(this, _eventArgs);
 
                 _processor.Execute(CancellationToken);
             }
 
-            if (Log.IsTraceEnabled)
-            {
-                _log.Trace(string.Format(Resources.ProcessorThreadStopped, _thread.ManagedThreadId,
-                    _processor.GetType().FullName));
-            }
+            ProcessorThreadStopped.Invoke(this, _eventArgs);
         }
 
         internal void Deactivate()

@@ -125,6 +125,9 @@
     <value>[processor thread active] : managed thread id = {0} / processor type = {1}</value>
     <comment>{0} = managed thread id, {1} = full type name of processor</comment>
   </data>
+  <data name="ProcessorThreadNotStartedException" xml:space="preserve">
+    <value>The processor thread has not yet been started.</value>
+  </data>
   <data name="ProcessorThreadStarting" xml:space="preserve">
     <value>[processor thread starting] : managed thread id = {0} / processor type = {1}</value>
     <comment>{0} = managed thread id, {1} = full type name of processor</comment>

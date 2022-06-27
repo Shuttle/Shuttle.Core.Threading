@@ -1,22 +1,21 @@
 using System;
 using System.Collections.Generic;
 using Shuttle.Core.Contract;
-using Shuttle.Core.Logging;
 using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
     public class ProcessorThreadPool : IProcessorThreadPool
     {
-        private readonly ILog _log;
         private readonly string _name;
         private readonly IProcessorFactory _processorFactory;
         private readonly int _threadCount;
+        private readonly TimeSpan _joinTimeout;
         private readonly List<ProcessorThread> _threads = new List<ProcessorThread>();
         private bool _disposed;
         private bool _started;
 
-        public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory)
+        public ProcessorThreadPool(string name, int threadCount, TimeSpan joinTimeout, IProcessorFactory processorFactory)
         {
             Guard.AgainstNull(processorFactory, nameof(processorFactory));
 
@@ -27,19 +26,16 @@ namespace Shuttle.Core.Threading
 
             _name = name ?? Guid.NewGuid().ToString();
             _threadCount = threadCount;
+            _joinTimeout = joinTimeout;
             _processorFactory = processorFactory;
-
-            _log = Log.For(this);
         }
 
         public void Pause()
         {
             foreach (var thread in _threads)
             {
-                thread.Stop();
+                thread.Stop(_joinTimeout);
             }
-
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "paused"));
         }
 
         public void Resume()
@@ -48,8 +44,6 @@ namespace Shuttle.Core.Threading
             {
                 thread.Start();
             }
-
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "resumed"));
         }
 
         public IProcessorThreadPool Start()
@@ -62,8 +56,6 @@ namespace Shuttle.Core.Threading
             StartThreads();
 
             _started = true;
-
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "started"));
 
             return this;
         }
@@ -105,7 +97,7 @@ namespace Shuttle.Core.Threading
 
                 foreach (var thread in _threads)
                 {
-                    thread.Stop();
+                    thread.Stop(_joinTimeout);
                 }
 
                 _processorFactory.AttemptDispose();
