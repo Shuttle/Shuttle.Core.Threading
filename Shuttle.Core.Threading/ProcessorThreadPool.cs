@@ -60,6 +60,8 @@ namespace Shuttle.Core.Threading
             return this;
         }
 
+        public IEnumerable<ProcessorThread> ProcessorThreads => _threads.AsReadOnly();
+
         public void Dispose()
         {
             Dispose(true);
