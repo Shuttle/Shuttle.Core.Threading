@@ -9,15 +9,17 @@ namespace Shuttle.Core.Threading
     {
         private readonly string _name;
         private readonly IProcessorFactory _processorFactory;
-        private readonly int _threadCount;
-        private readonly TimeSpan _joinTimeout;
+        private readonly ProcessorThreadOptions _processorThreadOptions;
         private readonly List<ProcessorThread> _threads = new List<ProcessorThread>();
         private bool _disposed;
         private bool _started;
+        private readonly TimeSpan _joinTimeout;
+        private readonly int _threadCount;
 
-        public ProcessorThreadPool(string name, int threadCount, TimeSpan joinTimeout, IProcessorFactory processorFactory)
+        public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
         {
             Guard.AgainstNull(processorFactory, nameof(processorFactory));
+            Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
 
             if (threadCount < 1)
             {
@@ -25,9 +27,16 @@ namespace Shuttle.Core.Threading
             }
 
             _name = name ?? Guid.NewGuid().ToString();
-            _threadCount = threadCount;
-            _joinTimeout = joinTimeout;
             _processorFactory = processorFactory;
+            _processorThreadOptions = processorThreadOptions;
+
+            _joinTimeout = _processorThreadOptions.JoinTimeout;
+            _threadCount = threadCount;
+
+            if (_joinTimeout.TotalSeconds < 1)
+            {
+                _joinTimeout = TimeSpan.FromSeconds(1);
+            }
         }
 
         public void Pause()
@@ -75,7 +84,7 @@ namespace Shuttle.Core.Threading
 
             while (i++ < _threadCount)
             {
-                var thread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create());
+                var thread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create(), _processorThreadOptions);
 
                 _threads.Add(thread);
 

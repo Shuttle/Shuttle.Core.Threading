@@ -11,17 +11,20 @@ namespace Shuttle.Core.Threading
 
         private readonly string _name;
         private readonly IProcessor _processor;
+        private readonly ProcessorThreadOptions _processorThreadOptions;
         private ProcessorThreadEventArgs _eventArgs;
 
         private bool _started;
         private Thread _thread;
 
-        public ProcessorThread(string name, IProcessor processor)
+        public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
         {
             Guard.AgainstNull(processor, nameof(processor));
+            Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
 
             _name = name;
             _processor = processor;
+            _processorThreadOptions = processorThreadOptions;
 
             CancellationToken = _cancellationTokenSource.Token;
         }
@@ -59,8 +62,8 @@ namespace Shuttle.Core.Threading
 
             _thread.TrySetApartmentState(ApartmentState.MTA);
 
-            _thread.IsBackground = true;
-            _thread.Priority = ThreadPriority.Normal;
+            _thread.IsBackground = _processorThreadOptions.IsBackground;
+            _thread.Priority = _processorThreadOptions.Priority;
 
             _thread.Start();
 
