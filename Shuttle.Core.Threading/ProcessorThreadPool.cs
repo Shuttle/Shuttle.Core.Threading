@@ -1,24 +1,25 @@
 using System;
 using System.Collections.Generic;
 using Shuttle.Core.Contract;
-using Shuttle.Core.Logging;
 using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading
 {
     public class ProcessorThreadPool : IProcessorThreadPool
     {
-        private readonly ILog _log;
         private readonly string _name;
         private readonly IProcessorFactory _processorFactory;
-        private readonly int _threadCount;
+        private readonly ProcessorThreadOptions _processorThreadOptions;
         private readonly List<ProcessorThread> _threads = new List<ProcessorThread>();
         private bool _disposed;
         private bool _started;
+        private readonly TimeSpan _joinTimeout;
+        private readonly int _threadCount;
 
-        public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory)
+        public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
         {
             Guard.AgainstNull(processorFactory, nameof(processorFactory));
+            Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
 
             if (threadCount < 1)
             {
@@ -26,20 +27,24 @@ namespace Shuttle.Core.Threading
             }
 
             _name = name ?? Guid.NewGuid().ToString();
-            _threadCount = threadCount;
             _processorFactory = processorFactory;
+            _processorThreadOptions = processorThreadOptions;
 
-            _log = Log.For(this);
+            _joinTimeout = _processorThreadOptions.JoinTimeout;
+            _threadCount = threadCount;
+
+            if (_joinTimeout.TotalSeconds < 1)
+            {
+                _joinTimeout = TimeSpan.FromSeconds(1);
+            }
         }
 
         public void Pause()
         {
             foreach (var thread in _threads)
             {
-                thread.Stop();
+                thread.Stop(_joinTimeout);
             }
-
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "paused"));
         }
 
         public void Resume()
@@ -48,8 +53,6 @@ namespace Shuttle.Core.Threading
             {
                 thread.Start();
             }
-
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "resumed"));
         }
 
         public IProcessorThreadPool Start()
@@ -63,10 +66,10 @@ namespace Shuttle.Core.Threading
 
             _started = true;
 
-            _log.Information(string.Format(Resources.ThreadPoolStatusChange, _name, "started"));
-
             return this;
         }
+
+        public IEnumerable<ProcessorThread> ProcessorThreads => _threads.AsReadOnly();
 
         public void Dispose()
         {
@@ -81,7 +84,7 @@ namespace Shuttle.Core.Threading
 
             while (i++ < _threadCount)
             {
-                var thread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create());
+                var thread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create(), _processorThreadOptions);
 
                 _threads.Add(thread);
 
@@ -105,7 +108,7 @@ namespace Shuttle.Core.Threading
 
                 foreach (var thread in _threads)
                 {
-                    thread.Stop();
+                    thread.Stop(_joinTimeout);
                 }
 
                 _processorFactory.AttemptDispose();

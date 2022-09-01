@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Shuttle.Core.Threading
 {
@@ -7,5 +8,6 @@ namespace Shuttle.Core.Threading
         void Pause();
         void Resume();
         IProcessorThreadPool Start();
+        IEnumerable<ProcessorThread> ProcessorThreads { get; }
     }
 }

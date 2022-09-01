@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
@@ -11,11 +15,11 @@ namespace Shuttle.Core.Threading
 
         private int _durationIndex;
 
-        public ThreadActivity(TimeSpan[] durationToSleepWhenIdle)
+        public ThreadActivity(IEnumerable<TimeSpan> durationToSleepWhenIdle)
         {
             Guard.AgainstNull(durationToSleepWhenIdle, nameof(durationToSleepWhenIdle));
 
-            _durations = durationToSleepWhenIdle;
+            _durations = durationToSleepWhenIdle.ToArray();
             _durationIndex = 0;
         }
 
@@ -29,9 +33,13 @@ namespace Shuttle.Core.Threading
 
         public void Waiting(CancellationToken cancellationToken)
         {
-            var ms = (int) GetSleepTimeSpan().TotalMilliseconds;
-
-            ThreadSleep.While(ms, cancellationToken);
+            try
+            {
+                Task.Delay(GetSleepTimeSpan(), cancellationToken).Wait(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         public void Working()
