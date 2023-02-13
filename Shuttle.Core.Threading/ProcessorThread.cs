@@ -94,7 +94,7 @@ namespace Shuttle.Core.Threading
 
             _cancellationTokenSource.Cancel();
 
-            _processor.AttemptDispose();
+            _processor.TryDispose();
 
             if (_thread.IsAlive)
             {

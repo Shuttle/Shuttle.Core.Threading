@@ -111,7 +111,7 @@ namespace Shuttle.Core.Threading
                     thread.Stop(_joinTimeout);
                 }
 
-                _processorFactory.AttemptDispose();
+                _processorFactory.TryDispose();
             }
 
             _disposed = true;
