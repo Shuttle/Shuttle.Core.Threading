@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
@@ -108,7 +109,7 @@ namespace Shuttle.Core.Threading
             {
                 ProcessorExecuting.Invoke(this, _eventArgs);
 
-                _processor.Execute(CancellationToken);
+                _processor.Execute(CancellationToken).GetAwaiter().GetResult();
             }
 
             ProcessorThreadStopped.Invoke(this, _eventArgs);

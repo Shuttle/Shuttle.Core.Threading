@@ -30,11 +30,11 @@ namespace Shuttle.Core.Threading
             _durationIndex = 0;
         }
 
-        public void Waiting(CancellationToken cancellationToken)
+        public async Task Waiting(CancellationToken cancellationToken)
         {
             try
             {
-                Task.Delay(GetSleepTimeSpan(), cancellationToken).Wait(cancellationToken);
+                await Task.Delay(GetSleepTimeSpan(), cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
