@@ -5,7 +5,7 @@ using Shuttle.Core.Contract;
 namespace Shuttle.Core.Threading
 {
     // shout-out to Daniel Cazzulino: http://www.cazzulino.com/callcontext-netstandard-netcore.html
-    public static class CallContext
+    public static class AmbientContext
     {
         private static readonly ConcurrentDictionary<string, AsyncLocal<object>> State = new ConcurrentDictionary<string, AsyncLocal<object>>();
 
@@ -21,13 +21,6 @@ namespace Shuttle.Core.Threading
             Guard.AgainstNullOrEmptyString(name, nameof(name));
 
             return State.TryGetValue(name, out var data) ? data.Value : null;
-        }
-
-        public static object RemoveData(string name)
-        {
-            Guard.AgainstNullOrEmptyString(name, nameof(name));
-
-            return State.TryRemove(name, out var data) ? data.Value : null;
         }
     }
 }
