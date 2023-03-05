@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Shuttle.Core.Threading.Tests
 {
     [TestFixture]
-    public class CallContextFixture
+    public class AmbientContextFixture
     {
         [Test]
         public void Should_be_able_to_flow_data()
