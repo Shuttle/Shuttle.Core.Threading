@@ -1,6 +1,5 @@
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
@@ -49,6 +48,10 @@ namespace Shuttle.Core.Threading
         };
 
         public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException = delegate
         {
         };
 
@@ -103,13 +106,20 @@ namespace Shuttle.Core.Threading
             }
         }
 
-        private void Work()
+        private async void Work()
         {
             while (!CancellationToken.IsCancellationRequested)
             {
                 ProcessorExecuting.Invoke(this, _eventArgs);
 
-                _processor.Execute(CancellationToken).GetAwaiter().GetResult();
+                try
+                {
+                    await _processor.Execute(CancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    ProcessorException.Invoke(this, new ProcessorExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, ex));
+                }
             }
 
             ProcessorThreadStopped.Invoke(this, _eventArgs);
