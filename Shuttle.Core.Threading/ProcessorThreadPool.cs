@@ -43,7 +43,15 @@ namespace Shuttle.Core.Threading
         {
             foreach (var thread in _threads)
             {
-                thread.Stop(_joinTimeout);
+                StopThread(thread);
+            }
+        }
+
+        private void StopThread(ProcessorThread thread)
+        {
+            if (!thread.Stop(_joinTimeout))
+            {
+
             }
         }
 

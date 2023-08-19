@@ -8,9 +8,6 @@ namespace Shuttle.Core.Threading
     public class ProcessorThread
     {
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-
-        private readonly string _name;
-        private readonly IProcessor _processor;
         private readonly ProcessorThreadOptions _processorThreadOptions;
         private ProcessorThreadEventArgs _eventArgs;
 
@@ -19,31 +16,23 @@ namespace Shuttle.Core.Threading
 
         public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
         {
-            Guard.AgainstNull(processor, nameof(processor));
-            Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
-
-            _name = name;
-            _processor = processor;
-            _processorThreadOptions = processorThreadOptions;
-
+            Name = Guard.AgainstNull(name, nameof(name));
+            Processor = Guard.AgainstNull(processor, nameof(processor));
+            _processorThreadOptions = Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
             CancellationToken = _cancellationTokenSource.Token;
         }
 
         public CancellationToken CancellationToken { get; }
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting = delegate
-        {
-        };
+        public string Name { get; }
+        public IProcessor Processor { get; }
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive = delegate
+        internal void Deactivate()
         {
-        };
+            _cancellationTokenSource.Cancel();
+        }
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping = delegate
-        {
-        };
-
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopped = delegate
+        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException = delegate
         {
         };
 
@@ -51,7 +40,19 @@ namespace Shuttle.Core.Threading
         {
         };
 
-        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException = delegate
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped = delegate
+        {
+        };
+
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping = delegate
         {
         };
 
@@ -62,7 +63,7 @@ namespace Shuttle.Core.Threading
                 return;
             }
 
-            _thread = new Thread(Work) { Name = _name };
+            _thread = new Thread(Work) { Name = Name };
 
             _thread.TrySetApartmentState(ApartmentState.MTA);
 
@@ -71,7 +72,7 @@ namespace Shuttle.Core.Threading
 
             _thread.Start();
 
-            _eventArgs = new ProcessorThreadEventArgs(_name, _thread.ManagedThreadId, _processor.GetType().FullName);
+            _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId, Processor.GetType().FullName);
 
             ProcessorThreadStarting.Invoke(this, _eventArgs);
 
@@ -98,12 +99,24 @@ namespace Shuttle.Core.Threading
 
             _cancellationTokenSource.Cancel();
 
-            _processor.TryDispose();
+            Processor.TryDispose();
 
-            if (_thread.IsAlive)
+            var aborted = false;
+
+            if (_thread.IsAlive && !_thread.Join(timeout))
             {
-                _thread.Join(timeout);
+                try
+                {
+                    _thread.Abort();
+                }
+                catch (ThreadAbortException)
+                {
+                    aborted = true;
+                }
             }
+
+            ProcessorThreadStopped.Invoke(this,
+                new ProcessorThreadStoppedEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, aborted));
         }
 
         private async void Work()
@@ -114,20 +127,13 @@ namespace Shuttle.Core.Threading
 
                 try
                 {
-                    await _processor.Execute(CancellationToken);
+                    await Processor.Execute(CancellationToken);
                 }
                 catch (Exception ex)
                 {
                     ProcessorException.Invoke(this, new ProcessorExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, ex));
                 }
             }
-
-            ProcessorThreadStopped.Invoke(this, _eventArgs);
-        }
-
-        internal void Deactivate()
-        {
-            _cancellationTokenSource.Cancel();
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Moq;
 using NUnit.Framework;
 
@@ -9,7 +10,7 @@ namespace Shuttle.Core.Threading.Tests
     public class ThreadActivityFixture
     {
         [Test]
-        public void Should_be_able_to_have_the_thread_wait()
+        public async Task Should_be_able_to_have_the_thread_wait()
         {
             var activity = new ThreadActivity(new[]
             {
@@ -20,11 +21,11 @@ namespace Shuttle.Core.Threading.Tests
             var start = DateTime.Now;
             var token = new CancellationToken(false);
 
-            activity.Waiting(token);
+            await activity.Waiting(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 250);
 
-            activity.Waiting(token);
+            await activity.Waiting(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 750);
         }
