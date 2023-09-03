@@ -32,29 +32,17 @@ namespace Shuttle.Core.Threading
             _cancellationTokenSource.Cancel();
         }
 
-        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException = delegate
-        {
-        };
+        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException;
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting = delegate
-        {
-        };
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting;
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive = delegate
-        {
-        };
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive;
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting = delegate
-        {
-        };
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting;
 
-        public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped = delegate
-        {
-        };
+        public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped;
 
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping = delegate
-        {
-        };
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping;
 
         public void Start()
         {
@@ -74,7 +62,7 @@ namespace Shuttle.Core.Threading
 
             _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId, Processor.GetType().FullName);
 
-            ProcessorThreadStarting.Invoke(this, _eventArgs);
+            ProcessorThreadStarting?.Invoke(this, _eventArgs);
 
             while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
             {
@@ -82,7 +70,7 @@ namespace Shuttle.Core.Threading
 
             if (!CancellationToken.IsCancellationRequested)
             {
-                ProcessorThreadActive.Invoke(this, _eventArgs);
+                ProcessorThreadActive?.Invoke(this, _eventArgs);
             }
 
             _started = true;
@@ -95,7 +83,7 @@ namespace Shuttle.Core.Threading
                 throw new InvalidOperationException(Resources.ProcessorThreadNotStartedException);
             }
 
-            ProcessorThreadStopping.Invoke(this, _eventArgs);
+            ProcessorThreadStopping?.Invoke(this, _eventArgs);
 
             _cancellationTokenSource.Cancel();
 
@@ -115,7 +103,7 @@ namespace Shuttle.Core.Threading
                 }
             }
 
-            ProcessorThreadStopped.Invoke(this,
+            ProcessorThreadStopped?.Invoke(this,
                 new ProcessorThreadStoppedEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, aborted));
         }
 
@@ -123,7 +111,7 @@ namespace Shuttle.Core.Threading
         {
             while (!CancellationToken.IsCancellationRequested)
             {
-                ProcessorExecuting.Invoke(this, _eventArgs);
+                ProcessorExecuting?.Invoke(this, _eventArgs);
 
                 try
                 {
@@ -131,7 +119,7 @@ namespace Shuttle.Core.Threading
                 }
                 catch (Exception ex)
                 {
-                    ProcessorException.Invoke(this, new ProcessorExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, ex));
+                    ProcessorException?.Invoke(this, new ProcessorExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, ex));
                 }
             }
         }
