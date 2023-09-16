@@ -51,20 +51,20 @@ namespace Shuttle.Core.Threading
         {
             foreach (var thread in _threads)
             {
-                thread.Start();
+                thread.StartAsync();
             }
         }
 
         public IProcessorThreadPool Start()
         {
-            if (_started)
-            {
-                return this;
-            }
+            Start(true);
 
-            StartThreads();
+            return this;
+        }
 
-            _started = true;
+        public IProcessorThreadPool StartAsync()
+        {
+            Start(false);
 
             return this;
         }
@@ -78,8 +78,13 @@ namespace Shuttle.Core.Threading
             GC.SuppressFinalize(this);
         }
 
-        private void StartThreads()
+        private void Start(bool sync)
         {
+            if (_started)
+            {
+                return;
+            }
+
             var i = 0;
 
             while (i++ < _threadCount)
@@ -88,8 +93,17 @@ namespace Shuttle.Core.Threading
 
                 _threads.Add(thread);
 
-                thread.Start();
+                if (sync)
+                {
+                    thread.Start();
+                }
+                else
+                {
+                    thread.StartAsync();
+                }
             }
+
+            _started = true;
         }
 
         protected virtual void Dispose(bool disposing)

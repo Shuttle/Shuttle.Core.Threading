@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
@@ -14,20 +13,26 @@ namespace Shuttle.Core.Threading
 
         private int _durationIndex;
 
-        public ThreadActivity(IEnumerable<TimeSpan> durationToSleepWhenIdle)
+        public ThreadActivity(IOptions<ThreadActivityOptions> threadActivityOptions)
         {
-            Guard.AgainstNull(durationToSleepWhenIdle, nameof(durationToSleepWhenIdle));
+            Guard.AgainstNull(threadActivityOptions, nameof(threadActivityOptions));
+            Guard.AgainstNull(threadActivityOptions.Value, nameof(threadActivityOptions.Value));
 
-            _durations = durationToSleepWhenIdle.ToArray();
+            _durations = threadActivityOptions.Value.DurationToSleepWhenIdle == null || threadActivityOptions.Value.DurationToSleepWhenIdle.Length == 0
+                ? new[] { DefaultDuration }
+                : threadActivityOptions.Value.DurationToSleepWhenIdle;
             _durationIndex = 0;
         }
 
-        public ThreadActivity(IThreadActivityConfiguration threadActivityConfiguration)
+        public void Waiting(CancellationToken cancellationToken)
         {
-            Guard.AgainstNull(threadActivityConfiguration, nameof(threadActivityConfiguration));
-
-            _durations = threadActivityConfiguration.DurationToSleepWhenIdle;
-            _durationIndex = 0;
+            try
+            {
+                Task.Delay(GetSleepTimeSpan(), cancellationToken).Wait(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         public async Task WaitingAsync(CancellationToken cancellationToken)

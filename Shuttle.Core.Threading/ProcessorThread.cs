@@ -13,6 +13,7 @@ namespace Shuttle.Core.Threading
 
         private bool _started;
         private Thread _thread;
+        private bool _sync;
 
         public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
         {
@@ -46,10 +47,22 @@ namespace Shuttle.Core.Threading
 
         public void Start()
         {
+            Start(true);
+        }
+
+        public void StartAsync()
+        {
+            Start(false);
+        }
+
+        public void Start(bool sync)
+        {
             if (_started)
             {
                 return;
             }
+
+            _sync = sync;
 
             _thread = new Thread(Work) { Name = Name };
 
@@ -115,7 +128,14 @@ namespace Shuttle.Core.Threading
 
                 try
                 {
-                    await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
+                    if (_sync)
+                    {
+                        Processor.Execute(CancellationToken);
+                    }
+                    else
+                    {
+                        await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
+                    }
                 }
                 catch (Exception ex)
                 {
