@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
@@ -50,9 +51,11 @@ namespace Shuttle.Core.Threading
             Start(true);
         }
 
-        public void StartAsync()
+        public async Task StartAsync()
         {
             Start(false);
+
+            await Task.CompletedTask;
         }
 
         public void Start(bool sync)
