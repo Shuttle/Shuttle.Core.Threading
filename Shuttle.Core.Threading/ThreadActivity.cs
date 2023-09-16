@@ -30,7 +30,7 @@ namespace Shuttle.Core.Threading
             _durationIndex = 0;
         }
 
-        public async Task Waiting(CancellationToken cancellationToken)
+        public async Task WaitingAsync(CancellationToken cancellationToken)
         {
             try
             {

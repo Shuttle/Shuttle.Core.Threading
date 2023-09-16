@@ -5,7 +5,7 @@ namespace Shuttle.Core.Threading
 {
     public interface IThreadActivity
     {
-        Task Waiting(CancellationToken cancellationToken);
+        Task WaitingAsync(CancellationToken cancellationToken);
         void Working();
     }
 }

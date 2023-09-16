@@ -21,11 +21,11 @@ namespace Shuttle.Core.Threading.Tests
             var start = DateTime.Now;
             var token = new CancellationToken(false);
 
-            await activity.Waiting(token);
+            await activity.WaitingAsync(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 250);
 
-            await activity.Waiting(token);
+            await activity.WaitingAsync(token);
 
             Assert.IsTrue((DateTime.Now - start).TotalMilliseconds >= 750);
         }

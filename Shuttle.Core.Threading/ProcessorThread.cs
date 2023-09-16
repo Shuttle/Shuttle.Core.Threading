@@ -115,7 +115,7 @@ namespace Shuttle.Core.Threading
 
                 try
                 {
-                    await Processor.Execute(CancellationToken);
+                    await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

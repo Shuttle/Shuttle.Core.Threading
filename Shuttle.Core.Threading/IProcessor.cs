@@ -5,6 +5,6 @@ namespace Shuttle.Core.Threading
 {
     public interface IProcessor
     {
-        Task Execute(CancellationToken cancellationToken);
+        Task ExecuteAsync(CancellationToken cancellationToken);
     }
 }
