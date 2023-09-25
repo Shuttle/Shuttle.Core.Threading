@@ -6,10 +6,9 @@ namespace Shuttle.Core.Threading
 {
     public interface IProcessorThreadPool : IDisposable
     {
-        void Pause();
-        void Resume();
+        void Stop();
         IProcessorThreadPool Start();
-        IProcessorThreadPool StartAsync();
+        Task<IProcessorThreadPool> StartAsync();
         IEnumerable<ProcessorThread> ProcessorThreads { get; }
     }
 }

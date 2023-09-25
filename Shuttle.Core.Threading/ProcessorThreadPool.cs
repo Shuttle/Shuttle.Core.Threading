@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
@@ -39,7 +40,7 @@ namespace Shuttle.Core.Threading
             }
         }
 
-        public void Pause()
+        public void Stop()
         {
             foreach (var thread in _threads)
             {
@@ -47,24 +48,16 @@ namespace Shuttle.Core.Threading
             }
         }
 
-        public void Resume()
-        {
-            foreach (var thread in _threads)
-            {
-                thread.StartAsync();
-            }
-        }
-
         public IProcessorThreadPool Start()
         {
-            Start(true);
+            Start(true).GetAwaiter().GetResult();
 
             return this;
         }
 
-        public IProcessorThreadPool StartAsync()
+        public async Task<IProcessorThreadPool> StartAsync()
         {
-            Start(false);
+            await Start(false);
 
             return this;
         }
@@ -78,7 +71,7 @@ namespace Shuttle.Core.Threading
             GC.SuppressFinalize(this);
         }
 
-        private void Start(bool sync)
+        private async Task Start(bool sync)
         {
             if (_started)
             {
@@ -99,7 +92,7 @@ namespace Shuttle.Core.Threading
                 }
                 else
                 {
-                    thread.StartAsync();
+                    await thread.StartAsync();
                 }
             }
 
