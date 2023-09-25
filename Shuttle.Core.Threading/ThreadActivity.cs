@@ -1,26 +1,23 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
 {
     public class ThreadActivity : IThreadActivity
     {
-        private static readonly TimeSpan DefaultDuration = TimeSpan.FromMilliseconds(250);
         private readonly TimeSpan[] _durations;
 
         private int _durationIndex;
 
-        public ThreadActivity(IOptions<ThreadActivityOptions> threadActivityOptions)
+        public ThreadActivity(IEnumerable<TimeSpan> waitDurations)
         {
-            Guard.AgainstNull(threadActivityOptions, nameof(threadActivityOptions));
-            Guard.AgainstNull(threadActivityOptions.Value, nameof(threadActivityOptions.Value));
+            Guard.AgainstEmptyEnumerable(waitDurations, nameof(waitDurations));
 
-            _durations = threadActivityOptions.Value.DurationToSleepWhenIdle == null || threadActivityOptions.Value.DurationToSleepWhenIdle.Length == 0
-                ? new[] { DefaultDuration }
-                : threadActivityOptions.Value.DurationToSleepWhenIdle;
+            _durations = waitDurations.ToArray();
             _durationIndex = 0;
         }
 
@@ -53,11 +50,6 @@ namespace Shuttle.Core.Threading
 
         private TimeSpan GetSleepTimeSpan()
         {
-            if (_durations == null || _durations.Length == 0)
-            {
-                return DefaultDuration;
-            }
-
             if (_durationIndex >= _durations.Length)
             {
                 _durationIndex = _durations.Length - 1;
