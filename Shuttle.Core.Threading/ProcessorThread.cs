@@ -74,11 +74,11 @@ namespace Shuttle.Core.Threading
             _thread.IsBackground = _processorThreadOptions.IsBackground;
             _thread.Priority = _processorThreadOptions.Priority;
 
-            _thread.Start();
-
             _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId, Processor.GetType().FullName);
 
             ProcessorThreadStarting?.Invoke(this, _eventArgs);
+
+            _thread.Start();
 
             while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
             {
