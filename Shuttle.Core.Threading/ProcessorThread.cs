@@ -35,16 +35,12 @@ namespace Shuttle.Core.Threading
         }
 
         public event EventHandler<ProcessorExceptionEventArgs> ProcessorException;
-
         public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting;
-
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive;
-
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting;
-
         public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped;
-
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping;
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadOperationCanceled;
 
         public void Start()
         {
@@ -139,6 +135,10 @@ namespace Shuttle.Core.Threading
                     {
                         await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    ProcessorThreadOperationCanceled?.Invoke(this, _eventArgs);
                 }
                 catch (Exception ex)
                 {
