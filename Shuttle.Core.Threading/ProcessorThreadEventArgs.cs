@@ -7,16 +7,11 @@ namespace Shuttle.Core.Threading
     {
         public string Name { get; }
         public int ManagedThreadId { get; }
-        public string ProcessorTypeFullName { get; }
 
-        public ProcessorThreadEventArgs(string name, int managedThreadId, string processorTypeFullName)
+        public ProcessorThreadEventArgs(string name, int managedThreadId)
         {
-            Guard.AgainstNullOrEmptyString(name, nameof(name));
-            Guard.AgainstNullOrEmptyString(processorTypeFullName, nameof(processorTypeFullName));
-
-            Name = name;
+            Name = Guard.AgainstNullOrEmptyString(name, nameof(name));
             ManagedThreadId = managedThreadId;
-            ProcessorTypeFullName = processorTypeFullName;
         }
     }
 }

@@ -6,6 +6,8 @@ namespace Shuttle.Core.Threading
 {
     public interface IProcessorThreadPool : IDisposable
     {
+        event EventHandler<ProcessorThreadCreatedEventArgs> ProcessorThreadCreated;
+
         void Stop();
         IProcessorThreadPool Start();
         Task<IProcessorThreadPool> StartAsync();

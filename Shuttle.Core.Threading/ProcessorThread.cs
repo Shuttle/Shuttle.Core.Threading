@@ -34,7 +34,7 @@ namespace Shuttle.Core.Threading
             _cancellationTokenSource.Cancel();
         }
 
-        public event EventHandler<ProcessorExceptionEventArgs> ProcessorException;
+        public event EventHandler<ProcessorThreadExceptionEventArgs> ProcessorException;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting;
@@ -70,7 +70,7 @@ namespace Shuttle.Core.Threading
             _thread.IsBackground = _processorThreadOptions.IsBackground;
             _thread.Priority = _processorThreadOptions.Priority;
 
-            _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId, Processor.GetType().FullName);
+            _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId);
 
             ProcessorThreadStarting?.Invoke(this, _eventArgs);
 
@@ -88,7 +88,7 @@ namespace Shuttle.Core.Threading
             _started = true;
         }
 
-        public void Stop(TimeSpan timeout)
+        public void Stop()
         {
             if (!_started)
             {
@@ -102,8 +102,14 @@ namespace Shuttle.Core.Threading
             Processor.TryDispose();
 
             var aborted = false;
+            var joinTimeout = _processorThreadOptions.JoinTimeout;
 
-            if (_thread.IsAlive && !_thread.Join(timeout))
+            if (joinTimeout.TotalSeconds < 1)
+            {
+                joinTimeout = TimeSpan.FromSeconds(1);
+            }
+
+            if (_thread.IsAlive && !_thread.Join(joinTimeout))
             {
                 try
                 {
@@ -115,8 +121,7 @@ namespace Shuttle.Core.Threading
                 }
             }
 
-            ProcessorThreadStopped?.Invoke(this,
-                new ProcessorThreadStoppedEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, aborted));
+            ProcessorThreadStopped?.Invoke(this, new ProcessorThreadStoppedEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, aborted));
         }
 
         private async void Work()
@@ -142,7 +147,7 @@ namespace Shuttle.Core.Threading
                 }
                 catch (Exception ex)
                 {
-                    ProcessorException?.Invoke(this, new ProcessorExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, _eventArgs.ProcessorTypeFullName, ex));
+                    ProcessorException?.Invoke(this, new ProcessorThreadExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, ex));
                 }
             }
         }

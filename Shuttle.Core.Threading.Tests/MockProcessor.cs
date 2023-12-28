@@ -23,7 +23,6 @@ public class MockProcessor : IProcessor
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         await Task.Delay(_executionDuration, cancellationToken).ConfigureAwait(false);
-
         ExecutionCount++;
     }
 }

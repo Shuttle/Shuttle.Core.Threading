@@ -4,8 +4,8 @@ namespace Shuttle.Core.Threading
     {
         public bool Aborted { get; }
 
-        public ProcessorThreadStoppedEventArgs(string name, int managedThreadId, string processorTypeFullName, bool aborted) 
-            : base(name, managedThreadId, processorTypeFullName)
+        public ProcessorThreadStoppedEventArgs(string name, int managedThreadId, bool aborted) 
+            : base(name, managedThreadId)
         {
             Aborted = aborted;
         }

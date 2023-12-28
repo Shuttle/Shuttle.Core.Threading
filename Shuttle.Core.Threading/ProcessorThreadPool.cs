@@ -11,10 +11,9 @@ namespace Shuttle.Core.Threading
         private readonly string _name;
         private readonly IProcessorFactory _processorFactory;
         private readonly ProcessorThreadOptions _processorThreadOptions;
-        private readonly List<ProcessorThread> _threads = new List<ProcessorThread>();
+        private readonly List<ProcessorThread> _processorThreads = new List<ProcessorThread>();
         private bool _disposed;
         private bool _started;
-        private readonly TimeSpan _joinTimeout;
         private readonly int _threadCount;
 
         public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
@@ -30,21 +29,16 @@ namespace Shuttle.Core.Threading
             _name = name ?? Guid.NewGuid().ToString();
             _processorFactory = processorFactory;
             _processorThreadOptions = processorThreadOptions;
-
-            _joinTimeout = _processorThreadOptions.JoinTimeout;
             _threadCount = threadCount;
-
-            if (_joinTimeout.TotalSeconds < 1)
-            {
-                _joinTimeout = TimeSpan.FromSeconds(1);
-            }
         }
+
+        public event EventHandler<ProcessorThreadCreatedEventArgs> ProcessorThreadCreated;
 
         public void Stop()
         {
-            foreach (var thread in _threads)
+            foreach (var thread in _processorThreads)
             {
-                thread.Stop(_joinTimeout);
+                thread.Stop();
             }
         }
 
@@ -62,7 +56,7 @@ namespace Shuttle.Core.Threading
             return this;
         }
 
-        public IEnumerable<ProcessorThread> ProcessorThreads => _threads.AsReadOnly();
+        public IEnumerable<ProcessorThread> ProcessorThreads => _processorThreads.AsReadOnly();
 
         public void Dispose()
         {
@@ -82,17 +76,19 @@ namespace Shuttle.Core.Threading
 
             while (i++ < _threadCount)
             {
-                var thread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create(), _processorThreadOptions);
+                var processorThread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create(), _processorThreadOptions);
 
-                _threads.Add(thread);
+                ProcessorThreadCreated?.Invoke(this, new ProcessorThreadCreatedEventArgs(processorThread));
+
+                _processorThreads.Add(processorThread);
 
                 if (sync)
                 {
-                    thread.Start();
+                    processorThread.Start();
                 }
                 else
                 {
-                    await thread.StartAsync();
+                    await processorThread.StartAsync();
                 }
             }
 
@@ -108,14 +104,14 @@ namespace Shuttle.Core.Threading
 
             if (disposing)
             {
-                foreach (var thread in _threads)
+                foreach (var thread in _processorThreads)
                 {
                     thread.Deactivate();
                 }
 
-                foreach (var thread in _threads)
+                foreach (var thread in _processorThreads)
                 {
-                    thread.Stop(_joinTimeout);
+                    thread.Stop();
                 }
 
                 _processorFactory.TryDispose();
