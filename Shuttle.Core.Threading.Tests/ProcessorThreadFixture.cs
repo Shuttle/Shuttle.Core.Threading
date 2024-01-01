@@ -64,7 +64,6 @@ public class ProcessorThreadFixture
             Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadOperationCanceled] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
         };
 
-
         if (sync)
         {
             processorThread.Start();
