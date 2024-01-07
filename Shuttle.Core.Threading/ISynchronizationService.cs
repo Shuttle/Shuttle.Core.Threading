@@ -5,7 +5,7 @@ namespace Shuttle.Core.Threading
 {
     public interface ISynchronizationService
     {
-        Task Wait(string name, CancellationToken cancellationToken = default);
+        Task WaitAsync(string name, CancellationToken cancellationToken = default);
         void Release(string name);
     }
 }

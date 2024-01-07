@@ -10,7 +10,7 @@ namespace Shuttle.Core.Threading
     {
         private readonly Dictionary<string, SemaphoreSlim> _semaphores = new Dictionary<string, SemaphoreSlim>();
 
-        public async Task Wait(string name, CancellationToken cancellationToken = default)
+        public async Task WaitAsync(string name, CancellationToken cancellationToken = default)
         {
             if (!_semaphores.ContainsKey(Guard.AgainstNullOrEmptyString(name, nameof(name))))
             {
