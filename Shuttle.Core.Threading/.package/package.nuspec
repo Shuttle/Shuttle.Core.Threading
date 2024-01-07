@@ -13,7 +13,7 @@
 		<repository type="git" url="https://github.com/shuttle/Shuttle.Core.Threading.git" />
 		<projectUrl>https://github.com/shuttle/Shuttle.Core.Threading</projectUrl>
 		<description>Thread-based processing.</description>
-		<copyright>Copyright (c) 2023, Eben Roux</copyright>
+		<copyright>Copyright (c) 2024, Eben Roux</copyright>
 		<tags>shuttle threading processor</tags>
 		<dependencies>
       <dependency id="Microsoft.Extensions.Options" version="7.0.1" />

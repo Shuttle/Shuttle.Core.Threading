@@ -115,6 +115,15 @@ namespace Shuttle.Core.Threading {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No syncronization item with name &apos;{0}&apos; has been registered..
+        /// </summary>
+        public static string SynchronizationNameException {
+            get {
+                return ResourceManager.GetString("SynchronizationNameException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The queue handler configuration requires thread count of at least 1.  The input queue can not be processed..
         /// </summary>
         public static string ThreadCountZeroException {

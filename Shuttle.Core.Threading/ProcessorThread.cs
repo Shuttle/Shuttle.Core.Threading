@@ -138,7 +138,10 @@ namespace Shuttle.Core.Threading
                     }
                     else
                     {
-                        await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
+                        using (ExecutionContext.SuppressFlow())
+                        {
+                            await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
+                        }
                     }
                 }
                 catch (OperationCanceledException)
