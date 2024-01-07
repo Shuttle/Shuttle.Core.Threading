@@ -17,7 +17,7 @@ namespace Shuttle.Core.Threading
                 _semaphores.Add(name, new SemaphoreSlim(1, 1));
             }
 
-            await _semaphores[name].WaitAsync(cancellationToken);
+            await _semaphores[name].WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Release(string name)
