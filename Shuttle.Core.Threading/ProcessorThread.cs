@@ -13,8 +13,8 @@ namespace Shuttle.Core.Threading
         private ProcessorThreadEventArgs _eventArgs;
 
         private bool _started;
-        private Thread _thread;
         private bool _sync;
+        private Thread _thread;
 
         public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
         {
@@ -37,21 +37,14 @@ namespace Shuttle.Core.Threading
         public event EventHandler<ProcessorThreadExceptionEventArgs> ProcessorException;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive;
+        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadOperationCanceled;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting;
         public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped;
         public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadOperationCanceled;
 
         public void Start()
         {
             Start(true);
-        }
-
-        public async Task StartAsync()
-        {
-            Start(false);
-
-            await Task.CompletedTask;
         }
 
         public void Start(bool sync)
@@ -86,6 +79,13 @@ namespace Shuttle.Core.Threading
             }
 
             _started = true;
+        }
+
+        public async Task StartAsync()
+        {
+            Start(false);
+
+            await Task.CompletedTask;
         }
 
         public void Stop()
@@ -132,16 +132,23 @@ namespace Shuttle.Core.Threading
 
                 try
                 {
-                    if (_sync)
+                    Task task = null;
+
+                    using (ExecutionContext.SuppressFlow())
                     {
-                        Processor.Execute(CancellationToken);
-                    }
-                    else
-                    {
-                        using (ExecutionContext.SuppressFlow())
+                        if (_sync)
                         {
-                            await Processor.ExecuteAsync(CancellationToken).ConfigureAwait(false);
+                            Processor.Execute(CancellationToken);
                         }
+                        else
+                        {
+                            task = Processor.ExecuteAsync(CancellationToken);
+                        }
+                    }
+
+                    if (task != null)
+                    {
+                        await task;
                     }
                 }
                 catch (OperationCanceledException)
