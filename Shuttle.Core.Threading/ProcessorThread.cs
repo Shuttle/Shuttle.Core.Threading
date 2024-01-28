@@ -132,23 +132,13 @@ namespace Shuttle.Core.Threading
 
                 try
                 {
-                    Task task = null;
-
-                    using (ExecutionContext.SuppressFlow())
+                    if (_sync)
                     {
-                        if (_sync)
-                        {
-                            Processor.Execute(CancellationToken);
-                        }
-                        else
-                        {
-                            task = Processor.ExecuteAsync(CancellationToken);
-                        }
+                        Processor.Execute(CancellationToken);
                     }
-
-                    if (task != null)
+                    else
                     {
-                        await task;
+                        await Processor.ExecuteAsync(CancellationToken);
                     }
                 }
                 catch (OperationCanceledException)
