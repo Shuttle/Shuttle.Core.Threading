@@ -12,7 +12,7 @@ Provides various classes and interfaces to facilitate thread-based processing.
 public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions);
 ```
 
-Each thread pool has a `name` used only for identyfing the pool.  The `threadCount` determines the number of `ProcessorThread` instances in the pool.  Each `ProcessorThread` calls the `IProcessor.Execute(CancellationToken)` instance provided by the `IProcessorFactory.Create()` method in a loop while the `CancellationToken.IsCancellationRequested` returns `false`.
+Each thread pool has a `name` used only for identyfing the pool.  The `threadCount` determines the number of `ProcessorThread` instances in the pool.  Each `ProcessorThread` calls the `IProcessor.Execute(CancellationToken)` method, or `IProcessor.ExecuteAsync(CancellationToken)` method if started asynchronously, on the instance provided by the `IProcessorFactory.Create()` method in a loop while the `CancellationToken.IsCancellationRequested` returns `false`.
 
 ## ProcessorThreadOptions
 
