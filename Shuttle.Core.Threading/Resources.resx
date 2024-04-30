@@ -140,6 +140,10 @@
     <value>[processor thread stopping] : managed thread id = {0} / processor type = {1}</value>
     <comment>{0} = managed thread id, {1} = full type name of processor</comment>
   </data>
+  <data name="SynchronizationNameException" xml:space="preserve">
+    <value>No syncronization item with name '{0}' has been registered.</value>
+    <comment>{0} = name</comment>
+  </data>
   <data name="ThreadCountZeroException" xml:space="preserve">
     <value>The queue handler configuration requires thread count of at least 1.  The input queue can not be processed.</value>
   </data>

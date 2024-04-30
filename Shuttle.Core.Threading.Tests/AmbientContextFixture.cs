@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace Shuttle.Core.Threading.Tests
 {
     [TestFixture]
-    public class CallContextFixture
+    public class AmbientContextFixture
     {
         [Test]
         public void Should_be_able_to_flow_data()
@@ -26,24 +26,24 @@ namespace Shuttle.Core.Threading.Tests
             Task.WaitAll(
                 Task.Run(() =>
                 {
-                    CallContext.SetData("d1", d1);
-                    new Thread(() => t10 = CallContext.GetData("d1")).Start();
+                    AmbientContext.SetData("d1", d1);
+                    new Thread(() => t10 = AmbientContext.GetData("d1")).Start();
                     Task.WaitAll(
-                        Task.Run(() => t1 = CallContext.GetData("d1"))
-                            .ContinueWith(t => Task.Run(() => t11 = CallContext.GetData("d1"))),
-                        Task.Run(() => t12 = CallContext.GetData("d1")),
-                        Task.Run(() => t13 = CallContext.GetData("d1"))
+                        Task.Run(() => t1 = AmbientContext.GetData("d1"))
+                            .ContinueWith(t => Task.Run(() => t11 = AmbientContext.GetData("d1"))),
+                        Task.Run(() => t12 = AmbientContext.GetData("d1")),
+                        Task.Run(() => t13 = AmbientContext.GetData("d1"))
                     );
                 }),
                 Task.Run(() =>
                 {
-                    CallContext.SetData("d2", d2);
-                    new Thread(() => t20 = CallContext.GetData("d2")).Start();
+                    AmbientContext.SetData("d2", d2);
+                    new Thread(() => t20 = AmbientContext.GetData("d2")).Start();
                     Task.WaitAll(
-                        Task.Run(() => t2 = CallContext.GetData("d2"))
-                            .ContinueWith(t => Task.Run(() => t21 = CallContext.GetData("d2"))),
-                        Task.Run(() => t22 = CallContext.GetData("d2")),
-                        Task.Run(() => t23 = CallContext.GetData("d2"))
+                        Task.Run(() => t2 = AmbientContext.GetData("d2"))
+                            .ContinueWith(t => Task.Run(() => t21 = AmbientContext.GetData("d2"))),
+                        Task.Run(() => t22 = AmbientContext.GetData("d2")),
+                        Task.Run(() => t23 = AmbientContext.GetData("d2"))
                     );
                 })
             );
@@ -60,8 +60,8 @@ namespace Shuttle.Core.Threading.Tests
             Assert.That(d2, Is.SameAs(t22));
             Assert.That(d2, Is.SameAs(t23));
 
-            Assert.Null(CallContext.GetData("d1"));
-            Assert.Null(CallContext.GetData("d2"));
+            Assert.Null(AmbientContext.GetData("d1"));
+            Assert.Null(AmbientContext.GetData("d2"));
         }
     }
 }

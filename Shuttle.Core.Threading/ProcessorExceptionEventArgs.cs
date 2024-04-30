@@ -3,15 +3,17 @@ using Shuttle.Core.Contract;
 
 namespace Shuttle.Core.Threading
 {
-    public class ProcessorThreadEventArgs : EventArgs
+    public class ProcessorThreadExceptionEventArgs : EventArgs
     {
         public string Name { get; }
         public int ManagedThreadId { get; }
+        public Exception Exception { get; }
 
-        public ProcessorThreadEventArgs(string name, int managedThreadId)
+        public ProcessorThreadExceptionEventArgs(string name, int managedThreadId, Exception exception)
         {
             Name = Guard.AgainstNullOrEmptyString(name, nameof(name));
             ManagedThreadId = managedThreadId;
+            Exception = Guard.AgainstNull(exception, nameof(exception));
         }
     }
 }

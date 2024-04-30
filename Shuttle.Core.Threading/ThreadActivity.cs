@@ -9,24 +9,15 @@ namespace Shuttle.Core.Threading
 {
     public class ThreadActivity : IThreadActivity
     {
-        private static readonly TimeSpan DefaultDuration = TimeSpan.FromMilliseconds(250);
         private readonly TimeSpan[] _durations;
 
         private int _durationIndex;
 
-        public ThreadActivity(IEnumerable<TimeSpan> durationToSleepWhenIdle)
+        public ThreadActivity(IEnumerable<TimeSpan> waitDurations)
         {
-            Guard.AgainstNull(durationToSleepWhenIdle, nameof(durationToSleepWhenIdle));
+            Guard.AgainstEmptyEnumerable(waitDurations, nameof(waitDurations));
 
-            _durations = durationToSleepWhenIdle.ToArray();
-            _durationIndex = 0;
-        }
-
-        public ThreadActivity(IThreadActivityConfiguration threadActivityConfiguration)
-        {
-            Guard.AgainstNull(threadActivityConfiguration, nameof(threadActivityConfiguration));
-
-            _durations = threadActivityConfiguration.DurationToSleepWhenIdle;
+            _durations = waitDurations.ToArray();
             _durationIndex = 0;
         }
 
@@ -41,6 +32,17 @@ namespace Shuttle.Core.Threading
             }
         }
 
+        public async Task WaitingAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Delay(GetSleepTimeSpan(), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
         public void Working()
         {
             _durationIndex = 0;
@@ -48,11 +50,6 @@ namespace Shuttle.Core.Threading
 
         private TimeSpan GetSleepTimeSpan()
         {
-            if (_durations == null || _durations.Length == 0)
-            {
-                return DefaultDuration;
-            }
-
             if (_durationIndex >= _durations.Length)
             {
                 _durationIndex = _durations.Length - 1;
