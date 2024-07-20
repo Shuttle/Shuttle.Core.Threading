@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Shuttle.Core.Contract;
@@ -15,6 +16,8 @@ namespace Shuttle.Core.Threading
         private bool _started;
         private bool _sync;
         private Thread _thread;
+
+        private readonly Dictionary<string, object> _state = new Dictionary<string, object>();
 
         public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
         {
@@ -64,8 +67,6 @@ namespace Shuttle.Core.Threading
             _thread.Priority = _processorThreadOptions.Priority;
 
             _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId);
-
-            ProcessorThreadStarting?.Invoke(this, _eventArgs);
 
             _thread.Start();
 
@@ -126,6 +127,8 @@ namespace Shuttle.Core.Threading
 
         private async void Work()
         {
+            ProcessorThreadStarting?.Invoke(this, _eventArgs);
+
             while (!CancellationToken.IsCancellationRequested)
             {
                 ProcessorExecuting?.Invoke(this, _eventArgs);
@@ -150,6 +153,20 @@ namespace Shuttle.Core.Threading
                     ProcessorException?.Invoke(this, new ProcessorThreadExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, ex));
                 }
             }
+        }
+
+        public void SetState(string key, object value)
+        {
+            Guard.AgainstNullOrEmptyString(key, nameof(key));
+
+            _state[key] = value;
+        }
+
+        public object GetState(string key)
+        {
+            Guard.AgainstNullOrEmptyString(key, nameof(key));
+
+            return _state.ContainsKey(key) ? _state[key] : null;
         }
     }
 }
