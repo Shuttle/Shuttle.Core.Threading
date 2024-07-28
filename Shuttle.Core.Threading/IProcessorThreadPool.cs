@@ -12,5 +12,9 @@ namespace Shuttle.Core.Threading
         IProcessorThreadPool Start();
         Task<IProcessorThreadPool> StartAsync();
         IEnumerable<ProcessorThread> ProcessorThreads { get; }
+        string Name { get; }
+        IProcessorFactory ProcessorFactory { get; }
+        ProcessorThreadOptions ThreadOptions { get; }
+        int ThreadCount { get; }
     }
 }

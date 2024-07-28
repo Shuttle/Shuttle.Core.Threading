@@ -10,7 +10,7 @@ namespace Shuttle.Core.Threading
         {
             var result = new ProcessorThreadPool(name, threadCount, processorFactory, processorThreadOptions);
 
-            ProcessorThreadPoolCreated?.Invoke(this, new ProcessorThreadPoolCreatedEventArgs(name, threadCount, processorFactory));
+            ProcessorThreadPoolCreated?.Invoke(this, new ProcessorThreadPoolCreatedEventArgs(result));
 
             return result;
         }

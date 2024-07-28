@@ -8,13 +8,14 @@ namespace Shuttle.Core.Threading
 {
     public class ProcessorThreadPool : IProcessorThreadPool
     {
-        private readonly string _name;
-        private readonly IProcessorFactory _processorFactory;
-        private readonly ProcessorThreadOptions _processorThreadOptions;
+        public string Name { get; }
+        public IProcessorFactory ProcessorFactory { get; }
+        public ProcessorThreadOptions ThreadOptions { get; }
+        public int ThreadCount { get; }
+
         private readonly List<ProcessorThread> _processorThreads = new List<ProcessorThread>();
         private bool _disposed;
         private bool _started;
-        private readonly int _threadCount;
 
         public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
         {
@@ -26,10 +27,10 @@ namespace Shuttle.Core.Threading
                 throw new ThreadCountZeroException();
             }
 
-            _name = name ?? Guid.NewGuid().ToString();
-            _processorFactory = processorFactory;
-            _processorThreadOptions = processorThreadOptions;
-            _threadCount = threadCount;
+            Name = name ?? Guid.NewGuid().ToString();
+            ProcessorFactory = processorFactory;
+            ThreadOptions = processorThreadOptions;
+            ThreadCount = threadCount;
         }
 
         public event EventHandler<ProcessorThreadCreatedEventArgs> ProcessorThreadCreated;
@@ -74,9 +75,9 @@ namespace Shuttle.Core.Threading
 
             var i = 0;
 
-            while (i++ < _threadCount)
+            while (i++ < ThreadCount)
             {
-                var processorThread = new ProcessorThread($"{_name} / {i}", _processorFactory.Create(), _processorThreadOptions);
+                var processorThread = new ProcessorThread($"{Name} / {i}", ProcessorFactory.Create(), ThreadOptions);
 
                 ProcessorThreadCreated?.Invoke(this, new ProcessorThreadCreatedEventArgs(processorThread));
 
@@ -114,7 +115,7 @@ namespace Shuttle.Core.Threading
                     thread.Stop();
                 }
 
-                _processorFactory.TryDispose();
+                ProcessorFactory.TryDispose();
             }
 
             _disposed = true;
