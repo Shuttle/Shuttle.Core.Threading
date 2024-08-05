@@ -96,8 +96,6 @@ namespace Shuttle.Core.Threading
                 throw new InvalidOperationException(Resources.ProcessorThreadNotStartedException);
             }
 
-            ProcessorThreadStopping?.Invoke(this, _eventArgs);
-
             _cancellationTokenSource.Cancel();
 
             Processor.TryDispose();
@@ -153,6 +151,8 @@ namespace Shuttle.Core.Threading
                     ProcessorException?.Invoke(this, new ProcessorThreadExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, ex));
                 }
             }
+
+            ProcessorThreadStopping?.Invoke(this, _eventArgs);
         }
 
         public void SetState(string key, object value)
