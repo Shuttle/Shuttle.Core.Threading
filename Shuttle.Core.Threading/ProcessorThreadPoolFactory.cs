@@ -1,18 +1,17 @@
 ﻿using System;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public class ProcessorThreadPoolFactory : IProcessorThreadPoolFactory
 {
-    public class ProcessorThreadPoolFactory : IProcessorThreadPoolFactory
+    public event EventHandler<ProcessorThreadPoolCreatedEventArgs>? ProcessorThreadPoolCreated;
+
+    public IProcessorThreadPool Create(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
     {
-        public event EventHandler<ProcessorThreadPoolCreatedEventArgs> ProcessorThreadPoolCreated;
+        var result = new ProcessorThreadPool(name, threadCount, processorFactory, processorThreadOptions);
 
-        public IProcessorThreadPool Create(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
-        {
-            var result = new ProcessorThreadPool(name, threadCount, processorFactory, processorThreadOptions);
+        ProcessorThreadPoolCreated?.Invoke(this, new(result));
 
-            ProcessorThreadPoolCreated?.Invoke(this, new ProcessorThreadPoolCreatedEventArgs(result));
-
-            return result;
-        }
+        return result;
     }
 }

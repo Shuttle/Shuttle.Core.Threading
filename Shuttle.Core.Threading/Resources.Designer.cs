@@ -79,6 +79,15 @@ namespace Shuttle.Core.Threading {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Processor thread did not join within the required time..
+        /// </summary>
+        public static string ProcessorThreadJoinTimeoutException {
+            get {
+                return ResourceManager.GetString("ProcessorThreadJoinTimeoutException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The processor thread has not yet been started..
         /// </summary>
         public static string ProcessorThreadNotStartedException {

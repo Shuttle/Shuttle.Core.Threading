@@ -151,4 +151,7 @@
     <value>Thread pool '{0}' has {1} successfully.</value>
     <comment>{0} = thread pool name , {1} = new status</comment>
   </data>
+  <data name="ProcessorThreadJoinTimeoutException" xml:space="preserve">
+    <value>Processor thread did not join within the required time.</value>
+  </data>
 </root>

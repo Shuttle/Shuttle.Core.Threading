@@ -1,15 +1,14 @@
 ﻿using System;
 using Shuttle.Core.Contract;
 
-namespace Shuttle.Core.Threading
-{
-    public class ProcessorThreadPoolCreatedEventArgs : EventArgs
-    {
-        public IProcessorThreadPool ProcessorThreadPool { get;}
+namespace Shuttle.Core.Threading;
 
-        public ProcessorThreadPoolCreatedEventArgs(IProcessorThreadPool processorThreadPool)
-        {
-            ProcessorThreadPool = Guard.AgainstNull(processorThreadPool, nameof(processorThreadPool));
-        }
+public class ProcessorThreadPoolCreatedEventArgs : EventArgs
+{
+    public ProcessorThreadPoolCreatedEventArgs(IProcessorThreadPool processorThreadPool)
+    {
+        ProcessorThreadPool = Guard.AgainstNull(processorThreadPool);
     }
+
+    public IProcessorThreadPool ProcessorThreadPool { get; }
 }

@@ -8,17 +8,12 @@ public class MockProcessor : IProcessor
 {
     private readonly TimeSpan _executionDuration;
 
-    public int ExecutionCount { get; private set; }
-
     public MockProcessor(TimeSpan executionDuration)
     {
         _executionDuration = executionDuration;
     }
 
-    public void Execute(CancellationToken cancellationToken)
-    {
-        ExecuteAsync(cancellationToken).GetAwaiter().GetResult();
-    }
+    public int ExecutionCount { get; private set; }
 
     public async Task ExecuteAsync(CancellationToken cancellationToken)
     {

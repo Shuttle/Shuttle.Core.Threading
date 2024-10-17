@@ -8,24 +8,13 @@ namespace Shuttle.Core.Threading.Tests;
 public class ProcessorThreadFixture
 {
     [Test]
-    public void Should_be_able_to_execute_processor_thread()
-    {
-        Should_be_able_to_execute_processor_thread_async(true).GetAwaiter().GetResult();
-    }
-
-    [Test]
     public async Task Should_be_able_to_execute_processor_thread_async()
-    {
-        await Should_be_able_to_execute_processor_thread_async(false);
-    }
-
-    private async Task Should_be_able_to_execute_processor_thread_async(bool sync)
     {
         const int minimumExecutionCount = 5;
 
         var executionDuration = TimeSpan.FromMilliseconds(200);
         var mockProcessor = new MockProcessor(executionDuration);
-        var processorThread = new ProcessorThread("thread", mockProcessor, new ProcessorThreadOptions());
+        var processorThread = new ProcessorThread("thread", mockProcessor, new());
         var cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = cancellationTokenSource.Token;
 
@@ -51,7 +40,7 @@ public class ProcessorThreadFixture
 
         processorThread.ProcessorThreadStopped += (sender, args) =>
         {
-            Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadStopped] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId} / aborted = '{args.Aborted}'");
+            Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadStopped] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
         };
 
         processorThread.ProcessorThreadStopping += (sender, args) =>
@@ -64,14 +53,7 @@ public class ProcessorThreadFixture
             Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadOperationCanceled] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
         };
 
-        if (sync)
-        {
-            processorThread.Start();
-        }
-        else
-        {
-            await processorThread.StartAsync();
-        }
+        await processorThread.StartAsync();
 
         var timeout = DateTime.Now.AddSeconds(500);
         var timedOut = false;
@@ -85,7 +67,7 @@ public class ProcessorThreadFixture
 
         cancellationTokenSource.Cancel();
 
-        processorThread.Stop();
+        await processorThread.StopAsync();
 
         Assert.That(timedOut, Is.False, $"[TIMEOUT] : Did not complete {minimumExecutionCount} executions before {timeout:O}");
     }

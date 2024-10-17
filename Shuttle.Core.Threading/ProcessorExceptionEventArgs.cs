@@ -1,19 +1,18 @@
 using System;
 using Shuttle.Core.Contract;
 
-namespace Shuttle.Core.Threading
-{
-    public class ProcessorThreadExceptionEventArgs : EventArgs
-    {
-        public string Name { get; }
-        public int ManagedThreadId { get; }
-        public Exception Exception { get; }
+namespace Shuttle.Core.Threading;
 
-        public ProcessorThreadExceptionEventArgs(string name, int managedThreadId, Exception exception)
-        {
-            Name = Guard.AgainstNullOrEmptyString(name, nameof(name));
-            ManagedThreadId = managedThreadId;
-            Exception = Guard.AgainstNull(exception, nameof(exception));
-        }
+public class ProcessorThreadExceptionEventArgs : EventArgs
+{
+    public ProcessorThreadExceptionEventArgs(string name, int managedThreadId, Exception exception)
+    {
+        Name = Guard.AgainstNullOrEmptyString(name);
+        ManagedThreadId = managedThreadId;
+        Exception = Guard.AgainstNull(exception);
     }
+
+    public Exception Exception { get; }
+    public int ManagedThreadId { get; }
+    public string Name { get; }
 }
