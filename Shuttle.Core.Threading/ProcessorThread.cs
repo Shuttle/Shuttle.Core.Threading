@@ -7,16 +7,16 @@ using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading;
 
-public class ProcessorThread
+public class ProcessorThread : IProcessorThreadContext
 {
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly ProcessorThreadOptions _processorThreadOptions;
 
     private readonly Dictionary<string, object> _state = new();
-    private ProcessorThreadEventArgs _eventArgs = new("unknown", -1);
+    private readonly ProcessorThreadEventArgs _eventArgs;
 
     private bool _started;
-    private Thread? _thread;
+    private readonly Thread _thread;
 
     public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
     {
@@ -24,6 +24,15 @@ public class ProcessorThread
         Processor = Guard.AgainstNull(processor);
         _processorThreadOptions = Guard.AgainstNull(processorThreadOptions);
         CancellationToken = _cancellationTokenSource.Token;
+
+        _thread = new(Work) { Name = Name };
+
+        _thread.TrySetApartmentState(ApartmentState.MTA);
+
+        _thread.IsBackground = _processorThreadOptions.IsBackground;
+        _thread.Priority = _processorThreadOptions.Priority;
+
+        _eventArgs = new(Name, _thread.ManagedThreadId);
     }
 
     public CancellationToken CancellationToken { get; }
@@ -62,15 +71,6 @@ public class ProcessorThread
         {
             return;
         }
-
-        _thread = new(Work) { Name = Name };
-
-        _thread.TrySetApartmentState(ApartmentState.MTA);
-
-        _thread.IsBackground = _processorThreadOptions.IsBackground;
-        _thread.Priority = _processorThreadOptions.Priority;
-
-        _eventArgs = new(Name, _thread.ManagedThreadId);
 
         _thread.Start();
 
@@ -126,7 +126,7 @@ public class ProcessorThread
 
             try
             {
-                await Processor.ExecuteAsync(CancellationToken);
+                await Processor.ExecuteAsync(this, CancellationToken);
             }
             catch (OperationCanceledException)
             {
