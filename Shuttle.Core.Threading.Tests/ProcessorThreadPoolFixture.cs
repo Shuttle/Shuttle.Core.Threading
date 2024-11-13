@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
 
@@ -14,6 +15,10 @@ public class ProcessorThreadPoolFixture
     {
         const int minimumExecutionCount = 5;
 
+        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
+
+        serviceScopeFactory.Setup(m => m.CreateScope()).Returns(new Mock<IServiceScope>().Object);
+
         var executionDuration = TimeSpan.FromMilliseconds(500);
         var cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = cancellationTokenSource.Token;
@@ -21,7 +26,7 @@ public class ProcessorThreadPoolFixture
 
         processorFactory.Setup(m => m.Create()).Returns(() => new MockProcessor(executionDuration));
 
-        var processorThreadPool = new ProcessorThreadPool("thread-pool", 5, processorFactory.Object, new());
+        var processorThreadPool = new ProcessorThreadPool("thread-pool", 5, serviceScopeFactory.Object, processorFactory.Object, new());
 
         processorThreadPool.ProcessorThreadCreated += (_, args) =>
         {

@@ -2,13 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
 namespace Shuttle.Core.Threading;
 
-public class ProcessorThread : IProcessorThreadContext
+public class ProcessorThread
 {
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly ProcessorThreadOptions _processorThreadOptions;
 
@@ -18,8 +20,9 @@ public class ProcessorThread : IProcessorThreadContext
     private bool _started;
     private readonly Thread _thread;
 
-    public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
+    public ProcessorThread(string name, IServiceScopeFactory serviceScopeFactory, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
     {
+        _serviceScopeFactory = Guard.AgainstNull(serviceScopeFactory);
         Name = Guard.AgainstNull(name);
         Processor = Guard.AgainstNull(processor);
         _processorThreadOptions = Guard.AgainstNull(processorThreadOptions);
@@ -45,12 +48,7 @@ public class ProcessorThread : IProcessorThreadContext
         _cancellationTokenSource.Cancel();
     }
 
-    public object? GetState(string key)
-    {
-        Guard.AgainstNullOrEmptyString(key);
-
-        return _state.TryGetValue(key, out var value) ? value : null;
-    }
+    public IState State { get; } = new State();
 
     public event EventHandler<ProcessorThreadExceptionEventArgs>? ProcessorException;
     public event EventHandler<ProcessorThreadEventArgs>? ProcessorExecuting;
@@ -59,11 +57,6 @@ public class ProcessorThread : IProcessorThreadContext
     public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStarting;
     public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStopped;
     public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStopping;
-
-    public void SetState(string key, object value)
-    {
-        _state[Guard.AgainstNullOrEmptyString(key)] = value;
-    }
 
     public async Task StartAsync()
     {
@@ -126,7 +119,10 @@ public class ProcessorThread : IProcessorThreadContext
 
             try
             {
-                await Processor.ExecuteAsync(this, CancellationToken);
+                using (var context = new ProcessorThreadContext(State, _serviceScopeFactory.CreateScope()))
+                {
+                    await Processor.ExecuteAsync(context, CancellationToken);
+                }
             }
             catch (OperationCanceledException)
             {

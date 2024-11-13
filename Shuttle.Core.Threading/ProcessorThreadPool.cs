@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
@@ -9,17 +10,20 @@ namespace Shuttle.Core.Threading;
 public class ProcessorThreadPool : IProcessorThreadPool
 {
     private readonly List<ProcessorThread> _processorThreads = new();
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private bool _disposed;
     private bool _started;
 
-    public ProcessorThreadPool(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
+    public ProcessorThreadPool(string name, int threadCount, IServiceScopeFactory serviceScopeFactory, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
     {
         if (threadCount < 1)
         {
             throw new ThreadCountZeroException();
         }
 
+
         Name = name;
+        _serviceScopeFactory = Guard.AgainstNull(serviceScopeFactory);
         ProcessorFactory = Guard.AgainstNull(processorFactory);
         ThreadOptions = Guard.AgainstNull(processorThreadOptions);
         ThreadCount = threadCount;
@@ -60,7 +64,7 @@ public class ProcessorThreadPool : IProcessorThreadPool
 
         while (i++ < ThreadCount)
         {
-            var processorThread = new ProcessorThread($"{Name} / {i}", ProcessorFactory.Create(), ThreadOptions);
+            var processorThread = new ProcessorThread($"{Name} / {i}", _serviceScopeFactory, ProcessorFactory.Create(), ThreadOptions);
 
             ProcessorThreadCreated?.Invoke(this, new(processorThread));
 

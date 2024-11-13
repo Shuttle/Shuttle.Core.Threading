@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+    <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Shuttle.Core.Contract" Version="20.0.0" />
     <PackageReference Include="Shuttle.Core.Reflection" Version="20.0.0" />
   </ItemGroup>

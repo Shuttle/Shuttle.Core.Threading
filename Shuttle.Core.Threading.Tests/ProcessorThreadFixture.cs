@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using NUnit.Framework;
 
 namespace Shuttle.Core.Threading.Tests;
@@ -12,9 +14,13 @@ public class ProcessorThreadFixture
     {
         const int minimumExecutionCount = 5;
 
+        var serviceScopeFactory = new Mock<IServiceScopeFactory>();
+
+        serviceScopeFactory.Setup(m => m.CreateScope()).Returns(new Mock<IServiceScope>().Object);
+
         var executionDuration = TimeSpan.FromMilliseconds(200);
         var mockProcessor = new MockProcessor(executionDuration);
-        var processorThread = new ProcessorThread("thread", mockProcessor, new());
+        var processorThread = new ProcessorThread("thread", serviceScopeFactory.Object, mockProcessor, new());
         var cancellationTokenSource = new CancellationTokenSource();
         var cancellationToken = cancellationTokenSource.Token;
 
