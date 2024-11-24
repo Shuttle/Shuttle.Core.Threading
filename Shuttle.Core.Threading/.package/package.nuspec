@@ -17,6 +17,7 @@
 		<tags>shuttle threading processor</tags>
 		<dependencies>
       <dependency id="Microsoft.Extensions.Options" version="8.0.2" />
+      <dependency id="Moq" version="4.20.72" />
       <dependency id="Shuttle.Core.Contract" version="20.0.0" />
       <dependency id="Shuttle.Core.Reflection" version="20.0.0" />
 		</dependencies>
