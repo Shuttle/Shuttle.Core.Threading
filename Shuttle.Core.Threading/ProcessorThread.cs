@@ -42,6 +42,7 @@ public class ProcessorThread
 
     public string Name { get; }
     public IProcessor Processor { get; }
+    public int ManagedThreadId => _thread.ManagedThreadId;
 
     internal void Deactivate()
     {
