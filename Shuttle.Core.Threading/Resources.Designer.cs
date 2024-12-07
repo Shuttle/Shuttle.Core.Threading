@@ -61,6 +61,15 @@ namespace Shuttle.Core.Threading {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot remove or replace key &apos;{0}&apos;..
+        /// </summary>
+        public static string ImmutableKeyException {
+            get {
+                return ResourceManager.GetString("ImmutableKeyException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to [processor thread executing] : managed thread id = {0} / processor type = {1}.
         /// </summary>
         public static string ProcessorExecuting {

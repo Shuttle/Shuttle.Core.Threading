@@ -14,7 +14,6 @@ public class ProcessorThread
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     private readonly ProcessorThreadOptions _processorThreadOptions;
 
-    private readonly Dictionary<string, object> _state = new();
     private readonly ProcessorThreadEventArgs _eventArgs;
 
     private bool _started;
@@ -36,6 +35,9 @@ public class ProcessorThread
         _thread.Priority = _processorThreadOptions.Priority;
 
         _eventArgs = new(Name, _thread.ManagedThreadId);
+
+        State.Add("Name", Name);
+        State.Add("ManagedThreadId", _thread.ManagedThreadId);
     }
 
     public CancellationToken CancellationToken { get; }

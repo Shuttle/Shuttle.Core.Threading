@@ -154,4 +154,8 @@
   <data name="ProcessorThreadJoinTimeoutException" xml:space="preserve">
     <value>Processor thread did not join within the required time.</value>
   </data>
+  <data name="ImmutableKeyException" xml:space="preserve">
+    <value>Cannot remove or replace key '{0}'.</value>
+    <comment>{0} = the immutable key</comment>
+  </data>
 </root>
