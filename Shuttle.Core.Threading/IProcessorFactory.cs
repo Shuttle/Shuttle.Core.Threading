@@ -1,7 +1,6 @@
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public interface IProcessorFactory
 {
-    public interface IProcessorFactory
-    {
-        IProcessor Create();
-    }
+    IProcessor Create();
 }

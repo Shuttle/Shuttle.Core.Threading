@@ -1,12 +1,11 @@
 using System;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public class ThreadCountZeroException : Exception
 {
-    public class ThreadCountZeroException : Exception
+    public ThreadCountZeroException()
+        : base(Resources.ThreadCountZeroException)
     {
-        public ThreadCountZeroException()
-            : base(Resources.ThreadCountZeroException)
-        {
-        }
     }
 }

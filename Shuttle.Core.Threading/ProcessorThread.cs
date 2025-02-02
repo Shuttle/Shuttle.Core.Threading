@@ -2,171 +2,141 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Reflection;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public class ProcessorThread
 {
-    public class ProcessorThread
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private readonly ProcessorThreadOptions _processorThreadOptions;
+
+    private readonly ProcessorThreadEventArgs _eventArgs;
+
+    private bool _started;
+    private readonly Thread _thread;
+
+    public ProcessorThread(string name, IServiceScopeFactory serviceScopeFactory, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
     {
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private readonly ProcessorThreadOptions _processorThreadOptions;
-        private ProcessorThreadEventArgs _eventArgs;
+        _serviceScopeFactory = Guard.AgainstNull(serviceScopeFactory);
+        Name = Guard.AgainstNull(name);
+        Processor = Guard.AgainstNull(processor);
+        _processorThreadOptions = Guard.AgainstNull(processorThreadOptions);
+        CancellationToken = _cancellationTokenSource.Token;
 
-        private bool _started;
-        private bool _sync;
-        private Thread _thread;
+        _thread = new(Work) { Name = Name };
 
-        private readonly Dictionary<string, object> _state = new Dictionary<string, object>();
+        _thread.TrySetApartmentState(ApartmentState.MTA);
 
-        public ProcessorThread(string name, IProcessor processor, ProcessorThreadOptions processorThreadOptions)
+        _thread.IsBackground = _processorThreadOptions.IsBackground;
+        _thread.Priority = _processorThreadOptions.Priority;
+
+        _eventArgs = new(Name, _thread.ManagedThreadId);
+
+        State.Add("Name", Name);
+        State.Add("ManagedThreadId", _thread.ManagedThreadId);
+    }
+
+    public CancellationToken CancellationToken { get; }
+
+    public string Name { get; }
+    public IProcessor Processor { get; }
+    public int ManagedThreadId => _thread.ManagedThreadId;
+
+    internal void Deactivate()
+    {
+        _cancellationTokenSource.Cancel();
+    }
+
+    public IState State { get; } = new State();
+
+    public event EventHandler<ProcessorThreadExceptionEventArgs>? ProcessorException;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorExecuting;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadActive;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadOperationCanceled;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStarting;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStopped;
+    public event EventHandler<ProcessorThreadEventArgs>? ProcessorThreadStopping;
+
+    public async Task StartAsync()
+    {
+        if (_started)
         {
-            Name = Guard.AgainstNull(name, nameof(name));
-            Processor = Guard.AgainstNull(processor, nameof(processor));
-            _processorThreadOptions = Guard.AgainstNull(processorThreadOptions, nameof(processorThreadOptions));
-            CancellationToken = _cancellationTokenSource.Token;
+            return;
         }
 
-        public CancellationToken CancellationToken { get; }
+        _thread.Start();
 
-        public string Name { get; }
-        public IProcessor Processor { get; }
-
-        internal void Deactivate()
+        while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
         {
-            _cancellationTokenSource.Cancel();
         }
 
-        public event EventHandler<ProcessorThreadExceptionEventArgs> ProcessorException;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorExecuting;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadActive;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadOperationCanceled;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStarting;
-        public event EventHandler<ProcessorThreadStoppedEventArgs> ProcessorThreadStopped;
-        public event EventHandler<ProcessorThreadEventArgs> ProcessorThreadStopping;
-
-        public void Start()
+        if (!CancellationToken.IsCancellationRequested)
         {
-            Start(true);
+            ProcessorThreadActive?.Invoke(this, _eventArgs);
         }
 
-        public void Start(bool sync)
+        _started = true;
+
+        await Task.CompletedTask;
+    }
+
+    public Task StopAsync()
+    {
+        if (!_started)
         {
-            if (_started)
-            {
-                return;
-            }
-
-            _sync = sync;
-
-            _thread = new Thread(Work) { Name = Name };
-
-            _thread.TrySetApartmentState(ApartmentState.MTA);
-
-            _thread.IsBackground = _processorThreadOptions.IsBackground;
-            _thread.Priority = _processorThreadOptions.Priority;
-
-            _eventArgs = new ProcessorThreadEventArgs(Name, _thread.ManagedThreadId);
-
-            _thread.Start();
-
-            while (!_thread.IsAlive && !CancellationToken.IsCancellationRequested)
-            {
-            }
-
-            if (!CancellationToken.IsCancellationRequested)
-            {
-                ProcessorThreadActive?.Invoke(this, _eventArgs);
-            }
-
-            _started = true;
+            throw new InvalidOperationException(Resources.ProcessorThreadNotStartedException);
         }
 
-        public async Task StartAsync()
-        {
-            Start(false);
+        _cancellationTokenSource.Cancel();
 
-            await Task.CompletedTask;
+        Processor.TryDispose();
+
+        var joinTimeout = _processorThreadOptions.JoinTimeout;
+
+        if (joinTimeout.TotalSeconds < 1)
+        {
+            joinTimeout = TimeSpan.FromSeconds(1);
         }
 
-        public void Stop()
+        if (_thread is { IsAlive: true } && !_thread.Join(joinTimeout))
         {
-            if (!_started)
+            throw new ApplicationException(Resources.ProcessorThreadJoinTimeoutException);
+        }
+
+        ProcessorThreadStopped?.Invoke(this, new(_eventArgs.Name, _eventArgs.ManagedThreadId));
+
+        return Task.CompletedTask;
+    }
+
+    private async void Work()
+    {
+        ProcessorThreadStarting?.Invoke(this, _eventArgs);
+
+        while (!CancellationToken.IsCancellationRequested)
+        {
+            ProcessorExecuting?.Invoke(this, _eventArgs);
+
+            try
             {
-                throw new InvalidOperationException(Resources.ProcessorThreadNotStartedException);
-            }
-
-            _cancellationTokenSource.Cancel();
-
-            Processor.TryDispose();
-
-            var aborted = false;
-            var joinTimeout = _processorThreadOptions.JoinTimeout;
-
-            if (joinTimeout.TotalSeconds < 1)
-            {
-                joinTimeout = TimeSpan.FromSeconds(1);
-            }
-
-            if (_thread.IsAlive && !_thread.Join(joinTimeout))
-            {
-                try
+                using (var context = new ProcessorThreadContext(State, _serviceScopeFactory.CreateScope()))
                 {
-                    _thread.Abort();
-                }
-                catch (ThreadAbortException)
-                {
-                    aborted = true;
+                    await Processor.ExecuteAsync(context, CancellationToken);
                 }
             }
-
-            ProcessorThreadStopped?.Invoke(this, new ProcessorThreadStoppedEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, aborted));
-        }
-
-        private async void Work()
-        {
-            ProcessorThreadStarting?.Invoke(this, _eventArgs);
-
-            while (!CancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException)
             {
-                ProcessorExecuting?.Invoke(this, _eventArgs);
-
-                try
-                {
-                    if (_sync)
-                    {
-                        Processor.Execute(CancellationToken);
-                    }
-                    else
-                    {
-                        await Processor.ExecuteAsync(CancellationToken);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    ProcessorThreadOperationCanceled?.Invoke(this, _eventArgs);
-                }
-                catch (Exception ex)
-                {
-                    ProcessorException?.Invoke(this, new ProcessorThreadExceptionEventArgs(_eventArgs.Name, _eventArgs.ManagedThreadId, ex));
-                }
+                ProcessorThreadOperationCanceled?.Invoke(this, _eventArgs);
             }
-
-            ProcessorThreadStopping?.Invoke(this, _eventArgs);
+            catch (Exception ex)
+            {
+                ProcessorException?.Invoke(this, new(_eventArgs.Name, _eventArgs.ManagedThreadId, ex));
+            }
         }
 
-        public void SetState(string key, object value)
-        {
-            Guard.AgainstNullOrEmptyString(key, nameof(key));
-
-            _state[key] = value;
-        }
-
-        public object GetState(string key)
-        {
-            Guard.AgainstNullOrEmptyString(key, nameof(key));
-
-            return _state.ContainsKey(key) ? _state[key] : null;
-        }
+        ProcessorThreadStopping?.Invoke(this, _eventArgs);
     }
 }

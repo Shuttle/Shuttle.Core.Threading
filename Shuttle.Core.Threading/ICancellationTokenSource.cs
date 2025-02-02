@@ -1,8 +1,9 @@
-﻿namespace Shuttle.Core.Threading
+﻿using System.Threading;
+
+namespace Shuttle.Core.Threading;
+
+public interface ICancellationTokenSource
 {
-    public interface ICancellationTokenSource
-    {
-        System.Threading.CancellationTokenSource Get();
-        void Renew();
-    }
+    CancellationTokenSource Get();
+    void Renew();
 }

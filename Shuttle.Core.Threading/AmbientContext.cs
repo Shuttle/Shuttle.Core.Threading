@@ -2,25 +2,20 @@
 using System.Threading;
 using Shuttle.Core.Contract;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+// shout-out to Daniel Cazzulino: http://www.cazzulino.com/callcontext-netstandard-netcore.html
+public static class AmbientContext
 {
-    // shout-out to Daniel Cazzulino: http://www.cazzulino.com/callcontext-netstandard-netcore.html
-    public static class AmbientContext
+    private static readonly ConcurrentDictionary<string, AsyncLocal<object>> State = new();
+
+    public static object? GetData(string name)
     {
-        private static readonly ConcurrentDictionary<string, AsyncLocal<object>> State = new ConcurrentDictionary<string, AsyncLocal<object>>();
+        return State.TryGetValue(Guard.AgainstNullOrEmptyString(name), out var data) ? data.Value : null;
+    }
 
-        public static void SetData(string name, object data)
-        {
-            Guard.AgainstNullOrEmptyString(name, nameof(name));
-
-            State.GetOrAdd(name, _ => new AsyncLocal<object>()).Value = data;
-        }
-
-        public static object GetData(string name)
-        {
-            Guard.AgainstNullOrEmptyString(name, nameof(name));
-
-            return State.TryGetValue(name, out var data) ? data.Value : null;
-        }
+    public static void SetData(string name, object data)
+    {
+        State.GetOrAdd(Guard.AgainstNullOrEmptyString(name), _ => new()).Value = data;
     }
 }

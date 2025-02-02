@@ -1,11 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public interface IProcessor
 {
-    public interface IProcessor
-    {
-        void Execute(CancellationToken cancellationToken);
-        Task ExecuteAsync(CancellationToken cancellationToken);
-    }
+    Task ExecuteAsync(IProcessorThreadContext processorThread, CancellationToken cancellationToken = default);
 }

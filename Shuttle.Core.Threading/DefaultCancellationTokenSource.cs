@@ -1,26 +1,25 @@
 ﻿using System;
 using System.Threading;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public class DefaultCancellationTokenSource : ICancellationTokenSource, IDisposable
 {
-    public class DefaultCancellationTokenSource : ICancellationTokenSource, IDisposable
+    private CancellationTokenSource _cancellationTokenSource = new();
+
+    public CancellationTokenSource Get()
     {
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        return _cancellationTokenSource;
+    }
 
-        public CancellationTokenSource Get()
-        {
-            return _cancellationTokenSource;
-        }
+    public void Renew()
+    {
+        _cancellationTokenSource.Cancel();
+        _cancellationTokenSource = new();
+    }
 
-        public void Renew()
-        {
-            _cancellationTokenSource.Cancel();
-            _cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        public void Dispose()
-        {
-            _cancellationTokenSource.Cancel();
-        }
+    public void Dispose()
+    {
+        _cancellationTokenSource.Cancel();
     }
 }

@@ -1,18 +1,26 @@
 ﻿using System;
+using Microsoft.Extensions.DependencyInjection;
+using Shuttle.Core.Contract;
 
-namespace Shuttle.Core.Threading
+namespace Shuttle.Core.Threading;
+
+public class ProcessorThreadPoolFactory : IProcessorThreadPoolFactory
 {
-    public class ProcessorThreadPoolFactory : IProcessorThreadPoolFactory
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+
+    public ProcessorThreadPoolFactory(IServiceScopeFactory serviceScopeFactory)
     {
-        public event EventHandler<ProcessorThreadPoolCreatedEventArgs> ProcessorThreadPoolCreated;
+        _serviceScopeFactory = Guard.AgainstNull(serviceScopeFactory);
+    }
 
-        public IProcessorThreadPool Create(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
-        {
-            var result = new ProcessorThreadPool(name, threadCount, processorFactory, processorThreadOptions);
+    public event EventHandler<ProcessorThreadPoolCreatedEventArgs>? ProcessorThreadPoolCreated;
 
-            ProcessorThreadPoolCreated?.Invoke(this, new ProcessorThreadPoolCreatedEventArgs(result));
+    public IProcessorThreadPool Create(string name, int threadCount, IProcessorFactory processorFactory, ProcessorThreadOptions processorThreadOptions)
+    {
+        var result = new ProcessorThreadPool(name, threadCount, _serviceScopeFactory, processorFactory, processorThreadOptions);
 
-            return result;
-        }
+        ProcessorThreadPoolCreated?.Invoke(this, new(result));
+
+        return result;
     }
 }
