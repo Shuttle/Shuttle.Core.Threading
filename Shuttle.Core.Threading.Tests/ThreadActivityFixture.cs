@@ -18,15 +18,15 @@ public class ThreadActivityFixture
                 TimeSpan.FromMilliseconds(500)
             });
 
-        var start = DateTime.Now;
+        var start = DateTimeOffset.UtcNow;
         var token = new CancellationToken(false);
 
         await activity.WaitingAsync(token);
 
-        Assert.That((DateTime.Now - start).TotalMilliseconds >= 250, Is.True);
+        Assert.That((DateTimeOffset.UtcNow - start).TotalMilliseconds >= 250, Is.True);
 
         await activity.WaitingAsync(token);
 
-        Assert.That((DateTime.Now - start).TotalMilliseconds >= 750, Is.True);
+        Assert.That((DateTimeOffset.UtcNow - start).TotalMilliseconds >= 750, Is.True);
     }
 }

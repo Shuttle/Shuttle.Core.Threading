@@ -10,7 +10,7 @@ namespace Shuttle.Core.Threading.Tests;
 [TestFixture]
 public class SharedCancellationTokenSourceFixture
 {
-    private static readonly Random Random = new(DateTime.Now.Millisecond);
+    private static readonly Random Random = new(DateTimeOffset.UtcNow.Millisecond);
 
     [Test]
     public void Should_be_able_to_shared_cancellation_token_source_entries()
@@ -59,6 +59,6 @@ public class SharedCancellationTokenSourceFixture
 
     private void Log(string message)
     {
-        Console.WriteLine($@"{DateTime.Now:O} - {message}");
+        Console.WriteLine($@"{DateTimeOffset.Now:O} - {message}");
     }
 }
