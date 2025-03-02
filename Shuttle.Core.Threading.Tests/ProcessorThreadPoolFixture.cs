@@ -32,50 +32,50 @@ public class ProcessorThreadPoolFixture
         {
             args.ProcessorThread.ProcessorException += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorException] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId} / exception = '{args.Exception}'");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorException] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId} / exception = '{args.Exception}'");
             };
 
             args.ProcessorThread.ProcessorExecuting += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorExecuting] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorExecuting] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
 
             args.ProcessorThread.ProcessorThreadActive += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorThreadActive] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadActive] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
 
             args.ProcessorThread.ProcessorThreadStarting += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorThreadStarting] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadStarting] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
 
             args.ProcessorThread.ProcessorThreadStopped += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorThreadStopped] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadStopped] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
 
             args.ProcessorThread.ProcessorThreadStopping += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorThreadStopping] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadStopping] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
 
             args.ProcessorThread.ProcessorThreadOperationCanceled += (sender, args) =>
             {
-                Console.WriteLine($@"{DateTimeOffset.UtcNow:O} - [ProcessorThreadOperationCanceled] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
+                Console.WriteLine($@"{DateTime.Now:O} - [ProcessorThreadOperationCanceled] : name = '{args.Name}' / execution count = {((MockProcessor)((ProcessorThread)sender).Processor).ExecutionCount} / managed thread id = {args.ManagedThreadId}");
             };
         };
 
         await processorThreadPool.StartAsync();
 
-        var timeout = DateTimeOffset.UtcNow.AddSeconds(5);
+        var timeout = DateTime.Now.AddSeconds(5);
         var timedOut = false;
 
         while (processorThreadPool.ProcessorThreads.Any(item => ((MockProcessor)item.Processor).ExecutionCount <= minimumExecutionCount && !timedOut))
         {
             await Task.Delay(25, cancellationToken).ConfigureAwait(false);
 
-            timedOut = DateTimeOffset.UtcNow >= timeout;
+            timedOut = DateTime.Now >= timeout;
         }
 
         cancellationTokenSource.Cancel();
