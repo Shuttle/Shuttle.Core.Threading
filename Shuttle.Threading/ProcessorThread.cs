@@ -110,23 +110,44 @@ public class ProcessorThread(string serviceKey, IServiceScopeFactory serviceScop
                 await _threadingOptions.ProcessorExecuted.InvokeAsync(new(ServiceKey, ManagedThreadId, processor, workPerformed), _cancellationToken);
                 await processor.TryDisposeAsync();
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (_cancellationToken.IsCancellationRequested)
             {
                 LogMessage.ProcessorThreadOperationCanceled(_logger, ServiceKey, ManagedThreadId);
 
-                await _threadingOptions.ProcessorThreadOperationCanceled.InvokeAsync(eventArgs, _cancellationToken);
+                await RaiseAsync(() => _threadingOptions.ProcessorThreadOperationCanceled.InvokeAsync(eventArgs, _cancellationToken));
+
                 break;
             }
             catch (Exception ex)
             {
+                // An `OperationCanceledException` that is raised while no cancellation has been requested (such as a
+                // `TaskCanceledException` from an `HttpClient` timeout within a processor) is an ordinary failure and
+                // should never end the work loop since the thread is not re-created.
                 LogMessage.ProcessorException(_logger, ServiceKey, ManagedThreadId, ex);
 
-                await _threadingOptions.ProcessorException.InvokeAsync(new(this, ManagedThreadId, ex), _cancellationToken);
+                await RaiseAsync(() => _threadingOptions.ProcessorException.InvokeAsync(new(this, ManagedThreadId, ex), _cancellationToken));
             }
         }
 
         LogMessage.ProcessorThreadStopping(_logger, ServiceKey, ManagedThreadId);
 
-        await _threadingOptions.ProcessorThreadStopping.InvokeAsync(eventArgs, _cancellationToken);
+        await RaiseAsync(() => _threadingOptions.ProcessorThreadStopping.InvokeAsync(eventArgs, _cancellationToken));
+    }
+
+    /// <summary>
+    ///     Raises an event that is invoked from within, or after, an exception handler.  A subscriber that throws may
+    ///     not be allowed to escape `WorkAsync` since the processor thread would then be orphaned; neither the thread
+    ///     pool nor the thread itself re-creates the work loop.
+    /// </summary>
+    private async Task RaiseAsync(Func<Task> raise)
+    {
+        try
+        {
+            await raise().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            LogMessage.ProcessorException(_logger, ServiceKey, ManagedThreadId, ex);
+        }
     }
 }
