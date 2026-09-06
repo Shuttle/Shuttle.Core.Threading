@@ -37,7 +37,7 @@
 
   <PropertyGroup>
     <Description>Thread-based processing.</Description>
-    <Version>21.0.3</Version>
+    <Version>21.0.4</Version>
     <PackageProjectUrl>https://github.com/shuttle/Shuttle.Threading</PackageProjectUrl>
     <RepositoryUrl>https://github.com/shuttle/Shuttle.Threading.git</RepositoryUrl>
     <PackageTags>shuttle threading processor</PackageTags>
